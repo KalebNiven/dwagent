@@ -9,7 +9,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import platform
 import subprocess
 import sys
-import utils
+import utils_core
 
 def is_windows():
     return (platform.system().lower().find("window") > -1)
@@ -41,8 +41,8 @@ def get_hw_name():
     if is_linux() and ((len(sapp)>=3 and sapp[0:3].lower()=="arm") or (len(sapp)>=7 and sapp[0:7].lower()=="aarch64")):
         #VERIFICA SE RASPBERRY
         try:
-            if utils.path_exists("/sys/firmware/devicetree/base/model"):
-                fin=utils.file_open("/sys/firmware/devicetree/base/model","r")
+            if utils_core.path_exists("/sys/firmware/devicetree/base/model"):
+                fin=utils_core.file_open("/sys/firmware/devicetree/base/model","r")
                 appmdl = fin.read()
                 fin.close()
                 appmdl=check_hw_string(appmdl);

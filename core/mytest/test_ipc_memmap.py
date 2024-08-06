@@ -6,7 +6,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 import ipc
 import time
-import utils
+import utils_core
     
     
 class Test(ipc.ChildProcessThread):
@@ -16,8 +16,8 @@ class Test(ipc.ChildProcessThread):
         mp1 = strm.read_obj()
         mp1.seek(0)
         s = mp1.read(11)
-        print("CHILD READ: " + utils.bytes_to_str(s))
-        mp1.write(utils.str_to_bytes("HELLO PARENT"))
+        print("CHILD READ: " + utils_core.bytes_to_str(s))
+        mp1.write(utils_core.str_to_bytes("HELLO PARENT"))
         mp1.close()
         strm.close()
         print("CHILD CLOSE")
@@ -34,10 +34,10 @@ if __name__ == "__main__":
     mp = ipc.MemMap(512*1024)
     lstrm.write_obj(mp)
     mp.seek(0)
-    mp.write(utils.str_to_bytes("HELLO CHILD"))
+    mp.write(utils_core.str_to_bytes("HELLO CHILD"))
     time.sleep(1)
     s = mp.read(12)
-    print("PARENT READ: " + utils.bytes_to_str(s))
+    print("PARENT READ: " + utils_core.bytes_to_str(s))
     time.sleep(1)
     
     mp.close()

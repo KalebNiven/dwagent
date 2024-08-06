@@ -9,7 +9,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import ipc
 import json
 import time
-import utils
+import utils_core
 
 TEST_TYPE="ReadAndWrite"
 #TEST_TYPE="SendStream"
@@ -24,7 +24,7 @@ class TestSendStream(ipc.ChildProcessThread):
             s = strmother.read()
             if s is None:
                 break
-            print("READ " + utils.bytes_to_str(s))
+            print("READ " + utils_core.bytes_to_str(s))
         strmother.close()
         strm.close()
         time.sleep(1)
@@ -39,7 +39,7 @@ class TestReadAndWrite(ipc.ChildProcessThread):
         
         print("START READ")
         cnt=0
-        tm=utils.get_time()
+        tm=utils_core.get_time()
         ar=[]
         while True:
             try:
@@ -54,7 +54,7 @@ class TestReadAndWrite(ipc.ChildProcessThread):
             cnt+=1       
                 
         #print("***************")
-        print("READ TIME:" + str(utils.get_time()-tm) + "  CNT:" + str(cnt))
+        print("READ TIME:" + str(utils_core.get_time()-tm) + "  CNT:" + str(cnt))
         print("END READ")
         
         if True:
@@ -65,7 +65,7 @@ class TestReadAndWrite(ipc.ChildProcessThread):
                 try:
                     s=ar[i]
                     cnt+=1
-                    if utils.bytes_to_str(s)!="TEST" + str(i+1):
+                    if utils_core.bytes_to_str(s)!="TEST" + str(i+1):
                         bok=False
                         print("ERRORE: '" + s + "' != 'TEST" + str(i+1) + "'")
                 except:
@@ -92,16 +92,16 @@ if __name__ == "__main__":
           
         time.sleep(1)            
         print("START WRITE")
-        tm=utils.get_time()
+        tm=utils_core.get_time()
         cnt=0
         try:        
             for i in range(TEST_NUM):
-                lstrm.write_bytes(utils.str_to_bytes("TEST" + str(i+1)))
+                lstrm.write_bytes(utils_core.str_to_bytes("TEST" + str(i+1)))
                 cnt+=1
                 #print("WRITE: "+ str(i))
         except Exception as e:
             print("WRITE ERROR: " + str(e) + "  CNT:" + str(cnt))
-        print("WRITE TIME:" + str(utils.get_time()-tm) + "  CNT:" + str(cnt))
+        print("WRITE TIME:" + str(utils_core.get_time()-tm) + "  CNT:" + str(cnt))
         print("END WRITE")
     elif TEST_TYPE=="SendStream":
         

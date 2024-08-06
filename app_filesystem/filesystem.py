@@ -9,7 +9,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import json
 import agent
 import re
-import utils
+import utils_core
 import ctypes
 import sys
 
@@ -17,8 +17,8 @@ import sys
 try:    
     import os
     if sys.version_info[0]==2:      
-        if utils.path_exists(os.path.dirname(__file__) + os.sep + "__pycache__"):
-            utils.path_remove(os.path.dirname(__file__) + os.sep + "__pycache__")
+        if utils_core.path_exists(os.path.dirname(__file__) + os.sep + "__pycache__"):
+            utils_core.path_remove(os.path.dirname(__file__) + os.sep + "__pycache__")
 except: 
     None
 ##### TO FIX 22/09/2021
@@ -47,11 +47,11 @@ class FileSystem():
     
     def __init__(self, agent_main):
         self._agent_main=agent_main
-        if utils.is_windows():
+        if utils_core.is_windows():
             self._osnative = Windows(self._agent_main)
-        elif utils.is_linux():
+        elif utils_core.is_linux():
             self._osnative = Linux()
-        elif utils.is_mac():
+        elif utils_core.is_mac():
             self._osnative = Mac()
     
     def destroy(self,bforce):
@@ -62,7 +62,7 @@ class FileSystem():
         
     def detect_bom_file(self, path):
         enc=None
-        text_file = utils.file_open(path, 'rb')
+        text_file = utils_core.file_open(path, 'rb')
         try:
             bts = text_file.read(10)
             for bm in self.TEXTFILE_BOM_TYPE:
@@ -104,14 +104,14 @@ class FileSystem():
                 fsprms=self.get_permission(cinfo)
                 if fsprms is not None:
                     if not fsprms["fullAccess"]:
-                        ar = apppath.split(utils.path_sep);
+                        ar = apppath.split(utils_core.path_sep);
                         name=ar[0];
                         bcheck=False
                         for permpt in fsprms["paths"]:
                             nm = permpt["name"]
                             if name==nm:
                                 pt = permpt["_path"]
-                                if pt.endswith(utils.path_sep):
+                                if pt.endswith(utils_core.path_sep):
                                     pt=pt[:len(pt)-1]
                                 apppath = apppath[len(name):];
                                 apppath= pt + apppath
@@ -124,10 +124,10 @@ class FileSystem():
                             if not prms["fullAccess"]:
                                 for permpt in prms["paths"]:
                                     pt = permpt["_path"]
-                                    if not pt.endswith(utils.path_sep):
-                                        pt=pt+utils.path_sep
+                                    if not pt.endswith(utils_core.path_sep):
+                                        pt=pt+utils_core.path_sep
                                     if self._osnative.pathStartswith(apppath,pt):
-                                        pathstocheck.append(permpt["name"] + utils.path_sep + apppath[len(pt):]) 
+                                        pathstocheck.append(permpt["name"] + utils_core.path_sep + apppath[len(pt):]) 
                             else:
                                 pathstocheck.append(apppath)
             else:
@@ -144,13 +144,13 @@ class FileSystem():
                 itmpth["alias"]=apppath
                 itmpth["allow_view"]=True
                 if not prms["fullAccess"]:
-                    ar = apppath.split(utils.path_sep);
+                    ar = apppath.split(utils_core.path_sep);
                     name=ar[0];
                     for permpt in prms["paths"]:
                         nm = permpt["name"]
                         if (name==nm):
                             pt = permpt["_path"]
-                            if pt.endswith(utils.path_sep):
+                            if pt.endswith(utils_core.path_sep):
                                 pt=pt[:len(pt)-1]
                             apppath = apppath[len(name):];
                             apppath= pt + apppath
@@ -207,7 +207,7 @@ class FileSystem():
         check_exists=True
         if "check_exists" in options:
             check_exists = options["check_exists"]
-        if check_exists and not utils.path_exists(sret):
+        if check_exists and not utils_core.path_exists(sret):
             raise Exception("Permission denied or read error.");
         return sret
     
@@ -216,20 +216,20 @@ class FileSystem():
         return self._osnative;
     
     def _append_to_list(self, arret, fpath,  fname):
-        fp = fpath + utils.path_sep + fname
+        fp = fpath + utils_core.path_sep + fname
         tp = None
         itm = {}
-        if utils.path_isdir(fp) == True:
+        if utils_core.path_isdir(fp) == True:
             tp="D"
         else:
             tp="F"
             try:
-                itm["Length"]=utils.path_size(fp)
+                itm["Length"]=utils_core.path_size(fp)
             except:
                 None
         itm["Name"] = tp + ':' + fname 
         try:
-            itm["LastModified"] = int(utils.path_time(fp)*1000)
+            itm["LastModified"] = int(utils_core.path_time(fp)*1000)
         except:
                 None
                 
@@ -290,10 +290,10 @@ class FileSystem():
             if app_name is not None:
                 options["app"]=app_name
             pdir =self.check_and_replace_path(cinfo, path, self.OPERATION_VIEW,options)
-            if not utils.path_isdir(pdir):
+            if not utils_core.path_isdir(pdir):
                 raise Exception("Permission denied or read error.");
             try:
-                lst=utils.path_list(pdir)
+                lst=utils_core.path_list(pdir)
             except Exception:
                 raise Exception("Permission denied or read error.");
             #Carica la lista
@@ -303,11 +303,11 @@ class FileSystem():
                     if not isinstance(fname, unicode):
                         fname=fname.decode("utf8","replace")
                 
-                if pdir==utils.path_sep:
+                if pdir==utils_core.path_sep:
                     fp = pdir + fname
                 else:
-                    fp = pdir + utils.path_sep + fname
-                if (self._osnative.is_file_valid(fp)) and ((not only_dir and not only_file) or (only_dir and utils.path_isdir(fp)) or (only_file and not utils.path_isdir(fp))):
+                    fp = pdir + utils_core.path_sep + fname
+                if (self._osnative.is_file_valid(fp)) and ((not only_dir and not only_file) or (only_dir and utils_core.path_isdir(fp)) or (only_file and not utils_core.path_isdir(fp))):
                     bok = True
                     if refilter is not None:
                         bok = refilter.match(fname);
@@ -351,7 +351,7 @@ class FileSystem():
             fp = path + arfiles[i]
             b = True
             try:
-                utils.path_remove(fp)
+                utils_core.path_remove(fp)
             except Exception:
                 b=False            
             tp = None
@@ -365,33 +365,33 @@ class FileSystem():
     
     def _cpmv(self, tp, fs, fd, replace):
         bok = True
-        if utils.path_isdir(fs):
-            if not utils.path_exists(fd):
-                utils.path_makedirs(fd)
+        if utils_core.path_isdir(fs):
+            if not utils_core.path_exists(fd):
+                utils_core.path_makedirs(fd)
                 if tp=="copy":
                     self._agent_main.get_osmodule().fix_file_permissions("COPY_DIRECTORY",fd, fs)
                 elif tp=="move":
                     self._agent_main.get_osmodule().fix_file_permissions("MOVE_DIRECTORY",fd, fs)
             lst=None
             try:
-                lst=utils.path_list(fs)
+                lst=utils_core.path_list(fs)
                 for fname in lst:
-                    b = self._cpmv(tp, fs + utils.path_sep + fname, fd + utils.path_sep + fname, replace)
+                    b = self._cpmv(tp, fs + utils_core.path_sep + fname, fd + utils_core.path_sep + fname, replace)
                     if bok is True:
                         bok = b
             except Exception:
                 bok=False
             if tp=="move":
                 try:
-                    utils.path_remove(fs)
+                    utils_core.path_remove(fs)
                 except Exception:
                     bok=False
         else:
             b=True
-            if utils.path_exists(fd):
+            if utils_core.path_exists(fd):
                 if replace is True:
                     try:
-                        utils.path_remove(fd)
+                        utils_core.path_remove(fd)
                     except Exception:
                         bok = False
                         b = False
@@ -400,10 +400,10 @@ class FileSystem():
             if b is True:
                 try:
                     if tp=="copy":
-                        utils.path_copy(fs, fd)
+                        utils_core.path_copy(fs, fd)
                         self._agent_main.get_osmodule().fix_file_permissions("COPY_FILE",fd, fs)
                     elif tp=="move":
-                        utils.path_move(fs, fd)
+                        utils_core.path_move(fs, fd)
                         self._agent_main.get_osmodule().fix_file_permissions("MOVE_FILE",fd)
                 except Exception:
                     bok=False
@@ -423,12 +423,12 @@ class FileSystem():
             fd = pathdst + nm
             cnt = 0
             if fs==fd:
-                while utils.path_exists(fd):
+                while utils_core.path_exists(fd):
                     cnt+=1
                     nm = "copy " + str(cnt) + " of " + arfiles[i];
                     fd = pathdst + nm
             b = True
-            if not fs==fd and fd.startswith(fs + utils.path_sep):
+            if not fs==fd and fd.startswith(fs + utils_core.path_sep):
                 b = False
             else:
                 b = self._cpmv("copy", fs, fd, replace);
@@ -452,7 +452,7 @@ class FileSystem():
             fs = pathsrc + nm
             fd = pathdst + nm
             b = True
-            if not fs==fd and fd.startswith(fs + utils.path_sep):
+            if not fs==fd and fd.startswith(fs + utils_core.path_sep):
                 b = False
             else:
                 b = self._cpmv("move", fs, fd, replace);
@@ -470,7 +470,7 @@ class FileSystem():
         arret=[]
         try:
             fd = path + name
-            utils.path_makedir(fd)
+            utils_core.path_makedir(fd)
             self._agent_main.get_osmodule().fix_file_permissions("CREATE_DIRECTORY",fd)
             self._append_to_list(arret, path, name)
         except Exception:
@@ -485,9 +485,9 @@ class FileSystem():
         fd = path+newname
         arret=[]
         try:
-            if utils.path_exists(fd):
+            if utils_core.path_exists(fd):
                 raise Exception("#FILEALREADYEXISTS")
-            utils.path_rename(fs, fd)
+            utils_core.path_rename(fs, fd)
             self._append_to_list(arret, path, newname)
         except Exception:
             arret.append({'Name': "E:" + newname})
@@ -512,17 +512,17 @@ class FileSystem():
     
     def _set_permissions(self, fs, params, recursive):
         bok = True
-        if not utils.path_islink(fs):
+        if not utils_core.path_islink(fs):
             try:
                 self._osnative.set_file_permissions(fs,params)
             except Exception:
                 bok=False
-            if recursive and utils.path_isdir(fs):
+            if recursive and utils_core.path_isdir(fs):
                 lst=None
                 try:
-                    lst=utils.path_list(fs)
+                    lst=utils_core.path_list(fs)
                     for fname in lst:
-                        b = self._set_permissions(fs + utils.path_sep + fname, params, recursive)
+                        b = self._set_permissions(fs + utils_core.path_sep + fname, params, recursive)
                         if bok is True:
                             bok = b
                 except Exception:
@@ -615,10 +615,10 @@ class Linux:
         pths = []
         itm={"Name": u"/"}
         pths.append(itm)
-        if utils.path_exists(u"/home"):
+        if utils_core.path_exists(u"/home"):
             itm={"Name": u"/home"}
             pths.append(itm)
-        if utils.path_exists(u"/root"):
+        if utils_core.path_exists(u"/root"):
             itm={"Name": u"/root"}
             pths.append(itm)
         return pths
@@ -634,7 +634,7 @@ class Linux:
             import pwd
             import grp
             import stat
-            stat_info = utils.path_stat(path)
+            stat_info = utils_core.path_stat(path)
             user = stat_info.st_uid
             try:
                 user = pwd.getpwuid(user).pw_name
@@ -656,7 +656,7 @@ class Linux:
     
     def set_file_permissions(self,path,prms):
         if "mode" in prms:
-            utils.path_change_permissions(path, int(prms["mode"],8))
+            utils_core.path_change_permissions(path, int(prms["mode"],8))
         if "owner" in prms and "group" in prms:
             import pwd
             import grp
@@ -668,7 +668,7 @@ class Linux:
                 gid = grp.getgrnam(prms["group"]).gr_gid
             except:
                 gid=int(prms["group"])
-            utils.path_change_owner(path, uid, gid)
+            utils_core.path_change_owner(path, uid, gid)
     
 
 class Mac(Linux):
@@ -677,16 +677,16 @@ class Mac(Linux):
         pths = []
         itm={"Name": u"/"}
         pths.append(itm)
-        if utils.path_exists(u"/Users"):
+        if utils_core.path_exists(u"/Users"):
             itm={"Name": u"/Users"}
             pths.append(itm)
-        if utils.path_exists(u"/Library"):
+        if utils_core.path_exists(u"/Library"):
             itm={"Name": u"/Library"}
             pths.append(itm)
-        if utils.path_exists(u"/System"):
+        if utils_core.path_exists(u"/System"):
             itm={"Name": u"/System"}
             pths.append(itm)
-        if utils.path_exists(u"/Volumes"):
+        if utils_core.path_exists(u"/Volumes"):
             itm={"Name": u"/Volumes"}
             pths.append(itm)
         return pths

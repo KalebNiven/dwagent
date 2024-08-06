@@ -15,7 +15,7 @@ except: #FIX INSTALLER
     import images
 import ctypes
 import _ctypes
-import utils
+import utils_core
 import platform
 import sys
 import time
@@ -111,8 +111,8 @@ def get_hw_name():
     if is_linux() and ((len(sapp)>=3 and sapp[0:3].lower()=="arm") or (len(sapp)>=7 and sapp[0:7].lower()=="aarch64")):
         #VERIFICA SE RASPBERRY
         try:
-            if utils.path_exists("/sys/firmware/devicetree/base/model"):
-                fin=utils.file_open("/sys/firmware/devicetree/base/model","r")
+            if utils_core.path_exists("/sys/firmware/devicetree/base/model"):
+                fin=utils_core.file_open("/sys/firmware/devicetree/base/model","r")
                 appmdl = fin.read()
                 fin.close()
                 appmdl=check_hw_string(appmdl);
@@ -215,13 +215,13 @@ def gdw_lib():
                 namelibinst="dwaggdi_x86_32.dylib"
             elif is_os_64bit():
                 namelibinst="dwaggdi_x86_64.dylib"
-        if not utils.path_exists(".srcmode"):
-            if namelibinst is not None and utils.path_exists(namelibinst): #Installer Mode
-                gdwlib = ctypes.CDLL("." + utils.path_sep + namelibinst)
-            elif utils.path_exists("native" + utils.path_sep + namelib):
-                gdwlib = ctypes.CDLL("native" + utils.path_sep + namelib)
+        if not utils_core.path_exists(".srcmode"):
+            if namelibinst is not None and utils_core.path_exists(namelibinst): #Installer Mode
+                gdwlib = ctypes.CDLL("." + utils_core.path_sep + namelibinst)
+            elif utils_core.path_exists("native" + utils_core.path_sep + namelib):
+                gdwlib = ctypes.CDLL("native" + utils_core.path_sep + namelib)
         else:
-            gdwlib = ctypes.CDLL(".." + utils.path_sep + "make" + utils.path_sep + "native" + utils.path_sep + namelib)
+            gdwlib = ctypes.CDLL(".." + utils_core.path_sep + "make" + utils_core.path_sep + "native" + utils_core.path_sep + namelib)
         if gdwlib==None:
             raise Exception("Missing gdi library.")
         
@@ -231,10 +231,10 @@ def gdw_lib():
 
 
 def getRGBColor(s):
-    return struct.unpack('BBB', utils.str_hex_to_bytes(s))
+    return struct.unpack('BBB', utils_core.str_hex_to_bytes(s))
 
 def getHexColor(r, g, b):
-    return utils.bytes_to_str_hex(struct.pack('BBB', r, g, b))
+    return utils_core.bytes_to_str_hex(struct.pack('BBB', r, g, b))
 
 def _repaint(sid,x,y,w,h):
     _gdimap["postaction"].append({"name":"REPAINT","id":sid,"x":x,"y":y,"width":w,"height":h})
@@ -731,7 +731,7 @@ class Window:
         return self._background    
     
     def set_title(self,t):
-        self._title=utils.str_new(t)
+        self._title=utils_core.str_new(t)
         _set_title(self._id,self._title)
     
     def get_title(self):
@@ -1059,7 +1059,7 @@ class DialogMessage(Window):
         return self._message
 
     def set_message(self, value):
-        self._message = utils.str_new(value)
+        self._message = utils_core.str_new(value)
 
     def _ok_action(self,e):
         if e["action"]=="PERFORMED":
@@ -1625,7 +1625,7 @@ class Label(Component):
         return self._text
 
     def set_text(self, value):
-        self._text = utils.str_new(value)
+        self._text = utils_core.str_new(value)
         self._hyperlinks={}
         self.repaint()
     
@@ -1775,7 +1775,7 @@ class Button(Component):
         return self._text
 
     def set_text(self, value):
-        self._text = utils.str_new(value)
+        self._text = utils_core.str_new(value)
         self.repaint() 
     
     def on_mouse_enter(self,e):
@@ -1835,7 +1835,7 @@ class RadioButton(Component):
         return self._text
 
     def set_text(self, value):
-        self._text = utils.str_new(value)
+        self._text = utils_core.str_new(value)
         self.repaint() 
     
     def get_selected(self):
@@ -1980,7 +1980,7 @@ class ImagePanel(Component):
             if self._imgitm is not None:
                 _gdimap["imagemanager"].unload(self._imgitm)
                 self._imgitm=None
-            if utils.path_exists(self._filename):
+            if utils_core.path_exists(self._filename):
                 self._imgitm = _gdimap["imagemanager"].load(self._filename)
             self._imgreload=False
         
@@ -2026,7 +2026,7 @@ class TextBox(Component):
         return self._text
 
     def set_text(self, value):
-        self._text = utils.str_new(value)
+        self._text = utils_core.str_new(value)
         self._cursor_position=len(self._text)
         self._selection_start=self._cursor_position
         self._selection_end=self._cursor_position
@@ -2131,8 +2131,8 @@ class TextBox(Component):
         if self._selection_start!=self._selection_end:
             self._text=self._text[0:self._selection_start] + self._text[self._selection_end:]
             self._cursor_position=self._selection_start
-        self._text=self._text[0:self._cursor_position] + utils.str_new(c) + self._text[self._cursor_position:]
-        self._cursor_position+=len(utils.str_new(c))
+        self._text=self._text[0:self._cursor_position] + utils_core.str_new(c) + self._text[self._cursor_position:]
+        self._cursor_position+=len(utils_core.str_new(c))
         self._selection_start=self._cursor_position
         self._selection_end=self._cursor_position
         self._blink=True

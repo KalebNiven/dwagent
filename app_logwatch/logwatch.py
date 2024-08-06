@@ -7,7 +7,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
 import json
-import utils
+import utils_core
 import agent
 
 ##### TO FIX 22/09/2021
@@ -15,8 +15,8 @@ try:
     import os
     import sys
     if sys.version_info[0]==2:
-        if utils.path_exists(os.path.dirname(__file__) + os.sep + "__pycache__"):
-            utils.path_remove(os.path.dirname(__file__) + os.sep + "__pycache__")
+        if utils_core.path_exists(os.path.dirname(__file__) + os.sep + "__pycache__"):
+            utils_core.path_remove(os.path.dirname(__file__) + os.sep + "__pycache__")
 except: 
     None
 ##### TO FIX 22/09/2021
@@ -44,7 +44,7 @@ class LogWatch():
         position = agent.get_prop(params,'position','')
         maxline = int(agent.get_prop(params,'position','1000'))        
         fpos = -1
-        flen = utils.path_size(path)
+        flen = utils_core.path_size(path)
         if  position!="":
             fpos = int(position)
             if fpos > flen:
@@ -59,7 +59,7 @@ class LogWatch():
                 enc = None
             if enc is None:
                 enc = "utf8"
-            f = utils.file_open(path, 'r',  encoding=enc, errors='replace')
+            f = utils_core.file_open(path, 'r',  encoding=enc, errors='replace')
             try:
                 if (fpos!=-1):
                     f.seek(fpos)

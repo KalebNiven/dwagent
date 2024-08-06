@@ -12,7 +12,7 @@ import sys
 import struct
 import signal
 import time
-import utils
+import utils_core
 import subprocess
 import io
 import agent
@@ -121,7 +121,7 @@ class ShellManager(threading.Thread):
         self._websocket.accept(10,{"on_close": self._on_close,"on_data":self._on_data})
                 
     def _decode_data(self,data):        
-        return utils.bytes_to_str(data,"utf8")
+        return utils_core.bytes_to_str(data,"utf8")
         
     def get_id(self):
         return self._id
@@ -215,7 +215,7 @@ class ShellManager(threading.Thread):
                                     print("*****************************************************************************\n")
                                     print("SEND: len:" + str(len(appsend)) + "  time:" + str(int(time.time() * 1000)-apptm) + "\n")'''
                             except Exception:
-                                er=utils.get_exception()
+                                er=utils_core.get_exception()
                                 try:
                                     snd = {}
                                     snd["id"]=idx
@@ -282,15 +282,15 @@ class LinuxMac():
         self._id=sid
         self._cols=col
         self._rows=row
-        if utils.is_linux():
+        if utils_core.is_linux():
             self._path="/bin/bash"
-            if not utils.path_exists(self._path):
+            if not utils_core.path_exists(self._path):
                 self._path="/bin/sh"
         else:
             self._path="/bin/zsh"
-            if not utils.path_exists(self._path): 
+            if not utils_core.path_exists(self._path): 
                 self._path="/bin/bash"
-                if not utils.path_exists(self._path):
+                if not utils_core.path_exists(self._path):
                     self._path="/bin/sh"
         
             
@@ -309,7 +309,7 @@ class LinuxMac():
             (po, pe) = p.communicate()
             p.wait()
             if len(po) > 0:
-                po = utils.bytes_to_str(po, "utf8")
+                po = utils_core.bytes_to_str(po, "utf8")
                 ar = po.split("\n")[0].split("=")[1].split(".")
                 if ar[1].upper()=="UTF8" or ar[1].upper()=="UTF-8":
                     if ar[0].upper()=="C":
@@ -323,7 +323,7 @@ class LinuxMac():
             (po, pe) = p.communicate()
             p.wait()
             if len(po) > 0:
-                po = utils.bytes_to_str(po, "utf8")
+                po = utils_core.bytes_to_str(po, "utf8")
                 arlines = po.split("\n")
                 for r in arlines:
                     ar = r.split(".")
@@ -453,7 +453,7 @@ class LinuxMac():
             return
         if self._bterm == None:
             return
-        self._writer.write(utils.str_to_bytes(c,self._rwenc))
+        self._writer.write(utils_core.str_to_bytes(c,self._rwenc))
         self._writer.flush()
 
     def read_update(self):
@@ -467,7 +467,7 @@ class LinuxMac():
         #output=self._reader.read(self._rows*self._cols)
         s = self._reader.read()
         if s is not None:
-            return utils.bytes_to_str(s,self._rwenc)
+            return utils_core.bytes_to_str(s,self._rwenc)
         else:
             return s        
 
@@ -527,7 +527,7 @@ class Windows():
         #return self._pty.read()
         bt = self._pty.read()
         if bt is not None and len(bt)>0:
-            return utils.bytes_to_str(bt, self._rwenc)            
+            return utils_core.bytes_to_str(bt, self._rwenc)            
         else:
             return bt
         

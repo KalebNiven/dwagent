@@ -33,7 +33,7 @@ import base64
 import ipc
 import ctypes
 import subprocess
-import utils
+import utils_core
 
 
 _MAIN_URL = "https://www.dwservice.net/"
@@ -53,12 +53,12 @@ def get_native():
         
 def stop_monitor(installpath):
     try:
-        stopfilename = installpath + utils.path_sep + u"monitor.stop"
-        if not utils.path_exists(stopfilename):
-            stopfile = utils.file_open(stopfilename, "w", encoding='utf-8')
+        stopfilename = installpath + utils_core.path_sep + u"monitor.stop"
+        if not utils_core.path_exists(stopfilename):
+            stopfile = utils_core.file_open(stopfilename, "w", encoding='utf-8')
             stopfile.close()
         time.sleep(5) #Attende in modo che si chiudono i monitor
-        utils.path_remove(stopfilename) 
+        utils_core.path_remove(stopfilename) 
     except:
         None
 
@@ -90,13 +90,13 @@ class NativeLinux:
         return u"/usr/share/" + self._name.lower()
     
     def get_install_path(self) :
-        if utils.path_exists(self._etc_path):
-            f = utils.file_open(self._etc_path,"rb")
+        if utils_core.path_exists(self._etc_path):
+            f = utils_core.file_open(self._etc_path,"rb")
             try:
                 s=f.read()
-                ar = json.loads(utils.bytes_to_str(s,"utf8"))
+                ar = json.loads(utils_core.bytes_to_str(s,"utf8"))
                 pth = ar['path']
-                if utils.path_exists(pth):
+                if utils_core.path_exists(pth):
                     return pth
             finally:
                 f.close()
@@ -123,20 +123,20 @@ class NativeLinux:
         return None
 
     def stop_service(self):
-        ret = utils.system_call(self._install_path + utils.path_sep + u"native" + utils.path_sep + u"dwagsvc stop", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
+        ret = utils_core.system_call(self._install_path + utils_core.path_sep + u"native" + utils_core.path_sep + u"dwagsvc stop", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
         self._install_log.flush()
         return ret==0
     
     def start_service(self):
-        ret = utils.system_call(self._install_path + utils.path_sep + u"native" + utils.path_sep + u"dwagsvc start", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
+        ret = utils_core.system_call(self._install_path + utils_core.path_sep + u"native" + utils_core.path_sep + u"dwagsvc start", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
         self._install_log.flush()
         return ret==0
     
     def replace_key_file(self, path, lst):
-        fin = utils.file_open(path, "r", encoding='utf-8')
+        fin = utils_core.file_open(path, "r", encoding='utf-8')
         data = fin.read()
         fin.close()
-        fout = utils.file_open(path, "w", encoding='utf-8')
+        fout = utils_core.file_open(path, "w", encoding='utf-8')
         for k in lst:
             data = data.replace(k,lst[k])
         fout.write(data)
@@ -152,60 +152,60 @@ class NativeLinux:
     
     def prepare_file_service(self, pth):
         lstrepl = self.get_replace_list()
-        fdwagsvc=pth + utils.path_sep + u"dwagsvc"
+        fdwagsvc=pth + utils_core.path_sep + u"dwagsvc"
         self.replace_key_file(fdwagsvc, lstrepl)
-        utils.path_change_permissions(fdwagsvc,  stat.S_IRWXU + stat.S_IRGRP + stat.S_IROTH)
-        fdwagent=pth + utils.path_sep + u"dwagent.service"
+        utils_core.path_change_permissions(fdwagsvc,  stat.S_IRWXU + stat.S_IRGRP + stat.S_IROTH)
+        fdwagent=pth + utils_core.path_sep + u"dwagent.service"
         if self._name.lower()!=u"dwagent":
-            utils.path_rename(fdwagent,pth + utils.path_sep  + self._name.lower() + u".service")
-            fdwagent=pth + utils.path_sep  + self._name.lower() + u".service"
+            utils_core.path_rename(fdwagent,pth + utils_core.path_sep  + self._name.lower() + u".service")
+            fdwagent=pth + utils_core.path_sep  + self._name.lower() + u".service"
         self.replace_key_file(fdwagent, lstrepl)
-        utils.path_change_permissions(fdwagent,  stat.S_IRUSR + stat.S_IWUSR + stat.S_IRGRP + stat.S_IROTH)
+        utils_core.path_change_permissions(fdwagent,  stat.S_IRUSR + stat.S_IWUSR + stat.S_IRGRP + stat.S_IROTH)
     
     def prepare_file_sh(self, pth):
         lstrepl = self.get_replace_list()        
-        appf=pth + utils.path_sep + u"dwagent"        
+        appf=pth + utils_core.path_sep + u"dwagent"        
         if self._name.lower()!=u"dwagent":
-            utils.path_rename(appf, pth + utils.path_sep + self._name.lower())
-            appf=pth + utils.path_sep + self._name.lower()
+            utils_core.path_rename(appf, pth + utils_core.path_sep + self._name.lower())
+            appf=pth + utils_core.path_sep + self._name.lower()
         self.replace_key_file(appf, lstrepl)        
-        utils.path_change_permissions(appf,  stat.S_IRWXU + stat.S_IRGRP +  stat.S_IXGRP + stat.S_IROTH + stat.S_IXOTH)
+        utils_core.path_change_permissions(appf,  stat.S_IRWXU + stat.S_IRGRP +  stat.S_IXGRP + stat.S_IROTH + stat.S_IXOTH)
         
-        appf=pth + utils.path_sep + u"configure"
+        appf=pth + utils_core.path_sep + u"configure"
         self.replace_key_file(appf, lstrepl)
-        utils.path_change_permissions(appf,  stat.S_IRWXU + stat.S_IRGRP +  stat.S_IXGRP + stat.S_IROTH + stat.S_IXOTH)
+        utils_core.path_change_permissions(appf,  stat.S_IRWXU + stat.S_IRGRP +  stat.S_IXGRP + stat.S_IROTH + stat.S_IXOTH)
         
-        appf=pth + utils.path_sep + u"uninstall"
+        appf=pth + utils_core.path_sep + u"uninstall"
         self.replace_key_file(appf, lstrepl)
-        utils.path_change_permissions(appf,  stat.S_IRWXU + stat.S_IRGRP +  stat.S_IXGRP + stat.S_IROTH + stat.S_IXOTH)
+        utils_core.path_change_permissions(appf,  stat.S_IRWXU + stat.S_IRGRP +  stat.S_IXGRP + stat.S_IROTH + stat.S_IXOTH)
         
         #Menu
-        fmenuconf=pth + utils.path_sep + u"dwagent.desktop"
-        if utils.path_exists(fmenuconf):
+        fmenuconf=pth + utils_core.path_sep + u"dwagent.desktop"
+        if utils_core.path_exists(fmenuconf):
             if self._name.lower()!=u"dwagent":
-                utils.path_rename(fmenuconf, pth + utils.path_sep + self._name.lower() + u".desktop")
-                fmenuconf=pth + utils.path_sep + self._name.lower() + u".desktop"        
+                utils_core.path_rename(fmenuconf, pth + utils_core.path_sep + self._name.lower() + u".desktop")
+                fmenuconf=pth + utils_core.path_sep + self._name.lower() + u".desktop"        
             self.replace_key_file(fmenuconf, lstrepl)
-            utils.path_change_permissions(fmenuconf,  stat.S_IRWXU + stat.S_IRGRP + stat.S_IRWXO)
+            utils_core.path_change_permissions(fmenuconf,  stat.S_IRWXU + stat.S_IRGRP + stat.S_IRWXO)
         
     
     #LO USA ANCHE agent.py
     def prepare_file_monitor(self, pth):
         lstrepl = self.get_replace_list()
-        appf=pth + utils.path_sep + u"systray"
-        if utils.path_exists(appf):
+        appf=pth + utils_core.path_sep + u"systray"
+        if utils_core.path_exists(appf):
             self.replace_key_file(appf, lstrepl)
-            utils.path_change_permissions(appf,  stat.S_IRWXU + stat.S_IRGRP +  stat.S_IXGRP + stat.S_IROTH + stat.S_IXOTH)
+            utils_core.path_change_permissions(appf,  stat.S_IRWXU + stat.S_IRGRP +  stat.S_IXGRP + stat.S_IROTH + stat.S_IXOTH)
         
-        fmenusystray=pth + utils.path_sep + u"systray.desktop"
-        if utils.path_exists(fmenusystray):
+        fmenusystray=pth + utils_core.path_sep + u"systray.desktop"
+        if utils_core.path_exists(fmenusystray):
             self.replace_key_file(fmenusystray, lstrepl)
-            utils.path_change_permissions(fmenusystray,  stat.S_IRWXU + stat.S_IRGRP + stat.S_IRWXO)
+            utils_core.path_change_permissions(fmenusystray,  stat.S_IRWXU + stat.S_IRGRP + stat.S_IRWXO)
     
     def prepare_file(self):
-        self.prepare_file_service(self._install_path + utils.path_sep + u"native")
-        self.prepare_file_sh(self._install_path + utils.path_sep + u"native")
-        self.prepare_file_monitor(self._install_path + utils.path_sep + u"native")
+        self.prepare_file_service(self._install_path + utils_core.path_sep + u"native")
+        self.prepare_file_sh(self._install_path + utils_core.path_sep + u"native")
+        self.prepare_file_monitor(self._install_path + utils_core.path_sep + u"native")
     
     def prepare_file_runonfly(self, runcode):
         None
@@ -220,35 +220,35 @@ class NativeLinux:
             pargs.append(u'runcode=' + runcode)
         
         libenv = os.environ
-        libenv["LD_LIBRARY_PATH"]=utils.path_absname(self._current_path + utils.path_sep + u"runtime" + utils.path_sep + u"lib")
+        libenv["LD_LIBRARY_PATH"]=utils_core.path_absname(self._current_path + utils_core.path_sep + u"runtime" + utils_core.path_sep + u"lib")
         return subprocess.Popen(pargs, env=libenv)
 
     
     def prepare_runtime_by_os(self,ds):
-        utils.path_makedir(ds)
-        utils.path_makedir(ds + utils.path_sep + u"bin")
-        utils.path_makedir(ds + utils.path_sep + u"lib")
-        utils.path_symlink(sys.executable, ds + utils.path_sep + u"bin" + utils.path_sep + self._name.lower())
+        utils_core.path_makedir(ds)
+        utils_core.path_makedir(ds + utils_core.path_sep + u"bin")
+        utils_core.path_makedir(ds + utils_core.path_sep + u"lib")
+        utils_core.path_symlink(sys.executable, ds + utils_core.path_sep + u"bin" + utils_core.path_sep + self._name.lower())
         return True;
     
     def install_service(self):
-        ret = utils.system_call(self._install_path + utils.path_sep + u"native" + utils.path_sep + u"dwagsvc install", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
+        ret = utils_core.system_call(self._install_path + utils_core.path_sep + u"native" + utils_core.path_sep + u"dwagsvc install", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
         self._install_log.flush()
         return ret==0
     
     def delete_service(self):
-        ret = utils.system_call(self._install_path + utils.path_sep + u"native" + utils.path_sep + u"dwagsvc delete", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
+        ret = utils_core.system_call(self._install_path + utils_core.path_sep + u"native" + utils_core.path_sep + u"dwagsvc delete", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
         self._install_log.flush()
         return ret==0
     
     def install_auto_run_monitor(self):
         try:
             pautos = u"/etc/xdg/autostart"
-            utils.path_copy(self._install_path + utils.path_sep + u"native" + utils.path_sep + u"systray.desktop", pautos + utils.path_sep + self._name.lower() + u"_systray.desktop")
-            utils.path_change_permissions(pautos + utils.path_sep + self._name.lower() + u"_systray.desktop",  stat.S_IRWXU + stat.S_IRGRP + stat.S_IRWXO)
+            utils_core.path_copy(self._install_path + utils_core.path_sep + u"native" + utils_core.path_sep + u"systray.desktop", pautos + utils_core.path_sep + self._name.lower() + u"_systray.desktop")
+            utils_core.path_change_permissions(pautos + utils_core.path_sep + self._name.lower() + u"_systray.desktop",  stat.S_IRWXU + stat.S_IRGRP + stat.S_IRWXO)
             #SI DEVE LANCIARE CON L'UTENTE CONNESSO A X
             #Esegue il monitor
-            #os.system(self._install_path + utils.path_sep + u"native" + utils.path_sep + u"dwaglnc systray &")
+            #os.system(self._install_path + utils_core.path_sep + u"native" + utils_core.path_sep + u"dwaglnc systray &")
         except:
             None
         return True
@@ -256,8 +256,8 @@ class NativeLinux:
     def remove_auto_run_monitor(self):
         try:
             fnm = u"/etc/xdg/autostart/" + self._name.lower() + u"_systray.desktop"
-            if utils.path_exists(fnm):
-                utils.path_remove(fnm)
+            if utils_core.path_exists(fnm):
+                utils_core.path_remove(fnm)
         except:
             None
         return True
@@ -268,16 +268,16 @@ class NativeLinux:
     def install_shortcuts(self):
         try:
             #Crea MENU
-            utils.system_call(self._install_path + utils.path_sep + u"native" + utils.path_sep + u"dwagsvc install_shortcuts", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
+            utils_core.system_call(self._install_path + utils_core.path_sep + u"native" + utils_core.path_sep + u"dwagsvc install_shortcuts", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
             self._install_log.flush()
             
             #CREA /etc/dwagent
-            if utils.path_exists(self._etc_path):
-                utils.path_remove(self._etc_path)
+            if utils_core.path_exists(self._etc_path):
+                utils_core.path_remove(self._etc_path)
             ar = {'path': self._install_path}
             s = json.dumps(ar, sort_keys=True, indent=1)
-            f = utils.file_open(self._etc_path, 'wb')
-            f.write(utils.str_to_bytes(s,"utf8"))            
+            f = utils_core.file_open(self._etc_path, 'wb')
+            f.write(utils_core.str_to_bytes(s,"utf8"))            
             f.close()
             return True
         except:
@@ -287,11 +287,11 @@ class NativeLinux:
     def remove_shortcuts(self) :
         try:
             #RIMUOVE /etc/dwagent
-            if utils.path_exists(self._etc_path):
-                utils.path_remove(self._etc_path)
+            if utils_core.path_exists(self._etc_path):
+                utils_core.path_remove(self._etc_path)
                 
             #RIMUOVE MENU
-            utils.system_call(self._install_path + utils.path_sep + u"native" + utils.path_sep + u"dwagsvc uninstall_shortcuts", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
+            utils_core.system_call(self._install_path + utils_core.path_sep + u"native" + utils_core.path_sep + u"dwagsvc uninstall_shortcuts", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
             self._install_log.flush()
         
             return True
@@ -336,18 +336,18 @@ class NativeMac:
     
     def get_install_path(self) :        
         ldpth = u"/Library/LaunchDaemons/" + self._svcnm + u".plist"
-        if utils.path_exists(ldpth) and utils.path_islink(ldpth):
-            return utils.path_dirname(utils.path_dirname(utils.path_realname(ldpth)))
+        if utils_core.path_exists(ldpth) and utils_core.path_islink(ldpth):
+            return utils_core.path_dirname(utils_core.path_dirname(utils_core.path_realname(ldpth)))
         
         if self._name.lower()==u"dwagent":
             #KEEP FOR COMPATIBILITY
             oldlncdmn_path = u"/Library/LaunchDaemons/net.dwservice.agent.plist"
-            if utils.path_exists(oldlncdmn_path) and utils.path_islink(oldlncdmn_path):
-                return utils.path_dirname(utils.path_dirname(utils.path_realname(oldlncdmn_path)))
+            if utils_core.path_exists(oldlncdmn_path) and utils_core.path_islink(oldlncdmn_path):
+                return utils_core.path_dirname(utils_core.path_dirname(utils_core.path_realname(oldlncdmn_path)))
             #KEEP FOR COMPATIBILITY                        
             oldlncdmn_path = u"/System/Library/LaunchDaemons/org.dwservice.agent.plist"
-            if utils.path_exists(oldlncdmn_path) and utils.path_islink(oldlncdmn_path):
-                return utils.path_dirname(utils.path_dirname(utils.path_realname(oldlncdmn_path)))        
+            if utils_core.path_exists(oldlncdmn_path) and utils_core.path_islink(oldlncdmn_path):
+                return utils_core.path_dirname(utils_core.path_dirname(utils_core.path_realname(oldlncdmn_path)))        
         
         return None             
     
@@ -366,7 +366,7 @@ class NativeMac:
             if onlycheck:
                 return messages.get_message("linuxRootPrivileges")
             else:
-                f = utils.file_open(u"runasadmin.install", 'wb')
+                f = utils_core.file_open(u"runasadmin.install", 'wb')
                 f.close()
                 raise SystemExit
         return None
@@ -392,34 +392,34 @@ class NativeMac:
     def _bootstrap_agent(self,pn):
         arver=self._get_os_ver()
         if arver[0]<10 or (arver[0]==10 and arver[1]<=9):
-            utils.system_call(u"sudo -u $(id -nu `stat -f '%u' /dev/console`) launchctl load -S Aqua /Library/LaunchAgents/" + pn, shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
+            utils_core.system_call(u"sudo -u $(id -nu `stat -f '%u' /dev/console`) launchctl load -S Aqua /Library/LaunchAgents/" + pn, shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
             self._install_log.flush()
         else:
-            utils.system_call(u"launchctl bootstrap gui/`stat -f '%u' /dev/console` /Library/LaunchAgents/" + pn, shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
+            utils_core.system_call(u"launchctl bootstrap gui/`stat -f '%u' /dev/console` /Library/LaunchAgents/" + pn, shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
             self._install_log.flush()
     
     def _bootout_agent(self,pn):
         arver=self._get_os_ver()
         if arver[0]<10 or (arver[0]==10 and arver[1]<=9):
-            utils.system_call(u"launchctl unload /Library/LaunchAgents/" + pn, shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
+            utils_core.system_call(u"launchctl unload /Library/LaunchAgents/" + pn, shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
             self._install_log.flush()
-            utils.system_call(u"for USER in `users`; do sudo -u $USER launchctl unload -S Aqua /Library/LaunchAgents/" + pn + "; done", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
+            utils_core.system_call(u"for USER in `users`; do sudo -u $USER launchctl unload -S Aqua /Library/LaunchAgents/" + pn + "; done", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
             self._install_log.flush()
         else:
-            utils.system_call(u"launchctl bootout gui/0 /Library/LaunchAgents/" + pn, shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
+            utils_core.system_call(u"launchctl bootout gui/0 /Library/LaunchAgents/" + pn, shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
             self._install_log.flush()
-            utils.system_call(u"for USER in `users`; do launchctl bootout gui/`id -u $USER` /Library/LaunchAgents/" + pn + "; done", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
+            utils_core.system_call(u"for USER in `users`; do launchctl bootout gui/`id -u $USER` /Library/LaunchAgents/" + pn + "; done", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
             self._install_log.flush()
             
     def stop_service(self):
         #Arresta GUILauncher
         #self._bootout_agent(self._guilncnm + u".plist")
-        ret =utils.system_call(self._install_path + utils.path_sep + u"native" + utils.path_sep + u"dwagsvc stop", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
+        ret =utils_core.system_call(self._install_path + utils_core.path_sep + u"native" + utils_core.path_sep + u"dwagsvc stop", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
         self._install_log.flush()
         return ret==0
     
     def start_service(self):
-        ret = utils.system_call(self._install_path + utils.path_sep + u"native" + utils.path_sep + u"dwagsvc start", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
+        ret = utils_core.system_call(self._install_path + utils_core.path_sep + u"native" + utils_core.path_sep + u"dwagsvc start", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
         self._install_log.flush()
         bret = (ret==0)
         #if bret:
@@ -439,10 +439,10 @@ class NativeMac:
         }
     
     def replace_key_file(self, path, enc,  lst):
-        fin=utils.file_open(path, "r", enc)
+        fin=utils_core.file_open(path, "r", enc)
         data = fin.read()
         fin.close()
-        fout=utils.file_open(path,"w", enc)
+        fout=utils_core.file_open(path,"w", enc)
         for k in lst:
             data = data.replace(k,lst[k])
         fout.write(data)
@@ -451,29 +451,29 @@ class NativeMac:
     def prepare_file_service(self, pth):
         lstrepl = self.get_replace_list()
         #Service
-        fapp=pth + utils.path_sep + "dwagsvc"
+        fapp=pth + utils_core.path_sep + "dwagsvc"
         self.replace_key_file(fapp, "utf-8", lstrepl)
-        utils.path_change_permissions(fapp,  stat.S_IRWXU + stat.S_IRGRP + stat.S_IROTH)
+        utils_core.path_change_permissions(fapp,  stat.S_IRWXU + stat.S_IRGRP + stat.S_IROTH)
         
-        fapp=pth + utils.path_sep + "dwagsvc.plist"
+        fapp=pth + utils_core.path_sep + "dwagsvc.plist"
         self.replace_key_file(fapp, "utf-8", lstrepl)
-        utils.path_change_permissions(fapp,  stat.S_IRUSR + stat.S_IWUSR + stat.S_IRGRP + stat.S_IROTH)
+        utils_core.path_change_permissions(fapp,  stat.S_IRUSR + stat.S_IWUSR + stat.S_IRGRP + stat.S_IROTH)
         
         
         #GUI Launcher
-        fapp=pth + utils.path_sep + "dwagguilnc"
-        utils.path_change_permissions(fapp,  stat.S_IRWXU + stat.S_IRGRP + stat.S_IXGRP + stat.S_IROTH + stat.S_IXOTH)
+        fapp=pth + utils_core.path_sep + "dwagguilnc"
+        utils_core.path_change_permissions(fapp,  stat.S_IRWXU + stat.S_IRGRP + stat.S_IXGRP + stat.S_IROTH + stat.S_IXOTH)
         
         '''
-        fapp=pth + utils.path_sep + "dwagguilnc.plist"
+        fapp=pth + utils_core.path_sep + "dwagguilnc.plist"
         self.replace_key_file(fapp, "utf-8", lstrepl)
-        utils.path_change_permissions(fapp,  stat.S_IRUSR + stat.S_IWUSR + stat.S_IRGRP + stat.S_IROTH)
+        utils_core.path_change_permissions(fapp,  stat.S_IRUSR + stat.S_IWUSR + stat.S_IRGRP + stat.S_IROTH)
         '''
         
     
     def prepare_file_app(self, pth):
-        utils.path_makedir(pth + u"/DWAgent.app/Contents/Resources")
-        utils.path_copy(self._install_path + self._logo_path, pth + u"/DWAgent.app/Contents/Resources/Icon.icns")
+        utils_core.path_makedir(pth + u"/DWAgent.app/Contents/Resources")
+        utils_core.path_copy(self._install_path + self._logo_path, pth + u"/DWAgent.app/Contents/Resources/Icon.icns")
         shutil.copytree(pth + u"/DWAgent.app",pth + u"/Configure.app")
         shutil.copytree(pth + u"/DWAgent.app",pth + u"/Uninstall.app")
         idname=u"net.dwservice."
@@ -482,7 +482,7 @@ class NativeMac:
             idname=u"com.apiremoteaccess."
         
         #DWAGENT        
-        utils.path_change_permissions(pth + u"/" + self._name + u".app/Contents/MacOS/Run",  stat.S_IRUSR + stat.S_IWUSR + stat.S_IXUSR + stat.S_IRGRP + stat.S_IXGRP + stat.S_IROTH + stat.S_IXOTH)           
+        utils_core.path_change_permissions(pth + u"/" + self._name + u".app/Contents/MacOS/Run",  stat.S_IRUSR + stat.S_IWUSR + stat.S_IXUSR + stat.S_IRGRP + stat.S_IXGRP + stat.S_IROTH + stat.S_IXOTH)           
         lstrepl = self.get_replace_list()
         lstrepl["@MOD_DWA@"]=u"monitor"
         self.replace_key_file(pth + u"/" + self._name + u".app/Contents/MacOS/Run", "utf-8", lstrepl)
@@ -490,7 +490,7 @@ class NativeMac:
         self.replace_key_file(pth + u"/" + self._name + u".app/Contents/Info.plist", "utf-8", lstrepl)        
         
         #CONFIGURE
-        utils.path_change_permissions(pth + u"/Configure.app/Contents/MacOS/Run",  stat.S_IRUSR + stat.S_IWUSR + stat.S_IXUSR + stat.S_IRGRP + stat.S_IXGRP + stat.S_IROTH + stat.S_IXOTH)
+        utils_core.path_change_permissions(pth + u"/Configure.app/Contents/MacOS/Run",  stat.S_IRUSR + stat.S_IWUSR + stat.S_IXUSR + stat.S_IRGRP + stat.S_IXGRP + stat.S_IROTH + stat.S_IXOTH)
         lstrepl = self.get_replace_list()
         lstrepl["@MOD_DWA@"]=u"configure"
         self.replace_key_file(pth + u"/Configure.app/Contents/MacOS/Run", "utf-8", lstrepl)
@@ -500,7 +500,7 @@ class NativeMac:
         self.replace_key_file(pth + u"/Configure.app/Contents/Info.plist", "utf-8", lstrepl)                
         
         #UNINSTALL        
-        utils.path_change_permissions(pth + u"/Uninstall.app/Contents/MacOS/Run",  stat.S_IRUSR + stat.S_IWUSR + stat.S_IXUSR + stat.S_IRGRP + stat.S_IXGRP + stat.S_IROTH + stat.S_IXOTH)
+        utils_core.path_change_permissions(pth + u"/Uninstall.app/Contents/MacOS/Run",  stat.S_IRUSR + stat.S_IWUSR + stat.S_IXUSR + stat.S_IRGRP + stat.S_IXGRP + stat.S_IROTH + stat.S_IXOTH)
         lstrepl = self.get_replace_list()
         lstrepl["@MOD_DWA@"]=u"uninstall"
         self.replace_key_file(pth + u"/Uninstall.app/Contents/MacOS/Run", "utf-8", lstrepl)
@@ -513,18 +513,18 @@ class NativeMac:
     def prepare_file_monitor(self, pth):
         lstrepl = self.get_replace_list()
         
-        fapp=pth + utils.path_sep + "dwagsystray"
-        utils.path_change_permissions(fapp,  stat.S_IRWXU + stat.S_IRGRP + stat.S_IXGRP + stat.S_IROTH + stat.S_IXOTH)
+        fapp=pth + utils_core.path_sep + "dwagsystray"
+        utils_core.path_change_permissions(fapp,  stat.S_IRWXU + stat.S_IRGRP + stat.S_IXGRP + stat.S_IROTH + stat.S_IXOTH)
         
-        fapp=pth + utils.path_sep + "dwagsystray.plist"
+        fapp=pth + utils_core.path_sep + "dwagsystray.plist"
         self.replace_key_file(fapp, "utf-8", lstrepl)
-        utils.path_change_permissions(fapp,  stat.S_IRUSR + stat.S_IWUSR + stat.S_IRGRP + stat.S_IROTH)
+        utils_core.path_change_permissions(fapp,  stat.S_IRUSR + stat.S_IWUSR + stat.S_IRGRP + stat.S_IROTH)
         
     
     def prepare_file(self):
-        self.prepare_file_service(self._install_path + utils.path_sep + u"native")
-        self.prepare_file_app(self._install_path + utils.path_sep + u"native")
-        self.prepare_file_monitor(self._install_path + utils.path_sep + u"native")
+        self.prepare_file_service(self._install_path + utils_core.path_sep + u"native")
+        self.prepare_file_app(self._install_path + utils_core.path_sep + u"native")
+        self.prepare_file_monitor(self._install_path + utils_core.path_sep + u"native")
     
     def prepare_file_runonfly(self, runcode):
         None
@@ -538,28 +538,28 @@ class NativeMac:
         if runcode is not None:
             pargs.append(u'runcode=' + runcode)
         libenv = os.environ
-        libenv["LD_LIBRARY_PATH"]=utils.path_absname(self._current_path + utils.path_sep + u"runtime" + utils.path_sep + u"lib")
+        libenv["LD_LIBRARY_PATH"]=utils_core.path_absname(self._current_path + utils_core.path_sep + u"runtime" + utils_core.path_sep + u"lib")
         return subprocess.Popen(pargs, env=libenv)
 
     def prepare_runtime_by_os(self,ds):
-        utils.path_makedir(ds)
-        utils.path_makedir(ds + utils.path_sep + u"bin")
-        utils.path_makedir(ds + utils.path_sep + u"lib")
-        utils.path_symlink(sys.executable, ds + utils.path_sep + u"bin" + utils.path_sep + self._name.lower())
+        utils_core.path_makedir(ds)
+        utils_core.path_makedir(ds + utils_core.path_sep + u"bin")
+        utils_core.path_makedir(ds + utils_core.path_sep + u"lib")
+        utils_core.path_symlink(sys.executable, ds + utils_core.path_sep + u"bin" + utils_core.path_sep + self._name.lower())
         return True;
     
     def install_service(self):
-        ret = utils.system_call(self._install_path + utils.path_sep + u"native" + utils.path_sep + u"dwagsvc install", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
+        ret = utils_core.system_call(self._install_path + utils_core.path_sep + u"native" + utils_core.path_sep + u"dwagsvc install", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
         self._install_log.flush()
         return ret==0
     
     def delete_service(self):
-        ret = utils.system_call(self._install_path + utils.path_sep + u"native" + utils.path_sep + u"dwagsvc delete", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
+        ret = utils_core.system_call(self._install_path + utils_core.path_sep + u"native" + utils_core.path_sep + u"dwagsvc delete", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
         self._install_log.flush()
         return ret==0
     
     def install_auto_run_monitor(self):
-        ret = utils.system_call(self._install_path + utils.path_sep + u"native" + utils.path_sep + u"dwagsvc installAutoRun", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
+        ret = utils_core.system_call(self._install_path + utils_core.path_sep + u"native" + utils_core.path_sep + u"dwagsvc installAutoRun", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
         self._install_log.flush()
         bret = (ret==0)
         if bret:
@@ -571,7 +571,7 @@ class NativeMac:
     def remove_auto_run_monitor(self):
         #Chiude tutti systray
         self._bootout_agent(self._systraynm + u".plist")
-        ret = utils.system_call(self._install_path + utils.path_sep + u"native" + utils.path_sep + u"dwagsvc removeAutoRun", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
+        ret = utils_core.system_call(self._install_path + utils_core.path_sep + u"native" + utils_core.path_sep + u"dwagsvc removeAutoRun", shell=True, stdout=self._install_log, stderr=subprocess.STDOUT)
         self._install_log.flush()
         return ret==0
     
@@ -580,9 +580,9 @@ class NativeMac:
     
     def install_shortcuts(self):
         try:
-            pathsrc = self._install_path + utils.path_sep + u"native/"
+            pathsrc = self._install_path + utils_core.path_sep + u"native/"
             pathdst = u"/Applications/"
-            if utils.path_exists(pathdst):
+            if utils_core.path_exists(pathdst):
                 shutil.copytree(pathsrc + self._name + u".app", pathdst + self._name +u".app", symlinks=True)
             return True
         except:
@@ -592,8 +592,8 @@ class NativeMac:
     def remove_shortcuts(self) :
         try:
             pathsrc = u"/Applications/" + self._name + u".app"
-            if utils.path_exists(pathsrc):
-                utils.path_remove(pathsrc)
+            if utils_core.path_exists(pathsrc):
+                utils_core.path_remove(pathsrc)
             return True
         except:
             return False
@@ -601,7 +601,7 @@ class NativeMac:
 
 if gdi.is_windows():
     
-    if utils.is_py2():
+    if utils_core.is_py2():
         import types
         import _subprocess
         from ctypes import byref, windll, c_char_p, c_wchar_p, c_void_p, Structure, sizeof, c_wchar, WinError
@@ -667,20 +667,20 @@ if gdi.is_windows():
                 wenv = None
                 if env is not None:
                     '''
-                    env = (utils.str_new("").join([
-                        utils.str_new("%s=%s\0") % (k, v)
-                        for k, v in env.items()])) + utils.str_new("\0")
+                    env = (utils_core.str_new("").join([
+                        utils_core.str_new("%s=%s\0") % (k, v)
+                        for k, v in env.items()])) + utils_core.str_new("\0")
                     '''
                     appenv=[]
                     for k, v in env.items():
-                        k = utils.str_new(k)
+                        k = utils_core.str_new(k)
                         n= ctypes.windll.kernel32.GetEnvironmentVariableW(k, None, 0)
                         if n>0:
                             buf= ctypes.create_unicode_buffer(u'\0'*n)
                             ctypes.windll.kernel32.GetEnvironmentVariableW(k, buf, n)
-                            appenv.append(utils.str_new("%s=%s\0") % (k , buf.value))
-                    appenv.append(utils.str_new("\0"))
-                    env = utils.str_new("").join(appenv)
+                            appenv.append(utils_core.str_new("%s=%s\0") % (k , buf.value))
+                    appenv.append(utils_core.str_new("\0"))
+                    env = utils_core.str_new("").join(appenv)
                     wenv = (c_wchar * len(env))()
                     wenv.value = env
             
@@ -718,12 +718,12 @@ if gdi.is_windows():
                     if shell:
                         startupinfo.dwFlags |= _subprocess.STARTF_USESHOWWINDOW
                         startupinfo.wShowWindow = _subprocess.SW_HIDE
-                        comspec = os.environ.get("COMSPEC", utils.str_new("cmd.exe"))
-                        args = utils.str_new('{} /c "{}"').format (comspec, args)
+                        comspec = os.environ.get("COMSPEC", utils_core.str_new("cmd.exe"))
+                        args = utils_core.str_new('{} /c "{}"').format (comspec, args)
                         if (_subprocess.GetVersion() >= 0x80000000 or
-                                utils.path_basename(comspec).lower() == "command.com"):
+                                utils_core.path_basename(comspec).lower() == "command.com"):
                             w9xpopen = self._find_w9xpopen()
-                            args = utils.str_new('"%s" %s') % (w9xpopen, args)
+                            args = utils_core.str_new('"%s" %s') % (w9xpopen, args)
                             creationflags |= _subprocess.CREATE_NEW_CONSOLE
         
                     def _close_in_parent(fd):
@@ -819,7 +819,7 @@ class NativeWindows:
         #self._install_log=log
 
     def get_proposal_path(self):
-        return utils.str_new(os.environ["ProgramFiles"]) + utils.path_sep + self._name
+        return utils_core.str_new(os.environ["ProgramFiles"]) + utils_core.path_sep + self._name
     
     def get_install_path(self) :
         vret = None
@@ -860,11 +860,11 @@ class NativeWindows:
                 if gdi.is_windows_process_elevated():
                     return None
                 else:
-                    f = utils.file_open(u"runasadmin.install", "w", encoding='utf-8')
+                    f = utils_core.file_open(u"runasadmin.install", "w", encoding='utf-8')
                     f.close()
                     raise SystemExit
             else:
-                f = utils.file_open(u"runasadmin.run", "w", encoding='utf-8')
+                f = utils_core.file_open(u"runasadmin.run", "w", encoding='utf-8')
                 f.close()
                 raise SystemExit
         else:
@@ -878,14 +878,14 @@ class NativeWindows:
                 if onlycheck:
                     return messages.get_message("windowsAdminPrivileges")
                 else:
-                    f = utils.file_open(u"runasadmin.install", "w", encoding='utf-8')
+                    f = utils_core.file_open(u"runasadmin.install", "w", encoding='utf-8')
                     f.close()
                     raise SystemExit
         else:
             if onlycheck:
                 return messages.get_message("windowsAdminPrivileges")
             else:
-                f = utils.file_open(u"runasadmin.install", "w", encoding='utf-8')
+                f = utils_core.file_open(u"runasadmin.install", "w", encoding='utf-8')
                 f.close()
                 raise SystemExit
                         
@@ -911,9 +911,9 @@ class NativeWindows:
         arf.append(u''.join([u"iconPath=" ,  pth, self._logo_path + u"\r\n"]))
         #FIX UNICODE PATH
         arf.append(u''.join([u"pythonHome=runtime\r\n"]))
-        arf.append(u''.join([u"pythonPath=",  pth, utils.path_sep, u"runtime", utils.path_sep, self._runtime, u"\r\n"]))
+        arf.append(u''.join([u"pythonPath=",  pth, utils_core.path_sep, u"runtime", utils_core.path_sep, self._runtime, u"\r\n"]))
         arf.append(u"parameters=-S -m agent -filelog")
-        f=utils.file_open(pth + utils.path_sep + u'native' + utils.path_sep + u'service.properties', 'w', encoding='utf-8') 
+        f=utils_core.file_open(pth + utils_core.path_sep + u'native' + utils_core.path_sep + u'service.properties', 'w', encoding='utf-8') 
         f.write(u''.join(arf))
         f.close()
     
@@ -924,19 +924,19 @@ class NativeWindows:
         arf.append(u''.join([u"serviceName=",self._name + u"RunOnFly",u"\r\n"]))
         arf.append(u''.join([u"iconPath=" ,  pth, self._logo_path + u"\r\n"]))
         #FIX UNICODE PATH
-        ar = self._current_path.split(utils.path_sep)
-        arf.append(u''.join([u"pythonHome=.." + utils.path_sep + ar[len(ar)-1] + utils.path_sep + u"runtime\r\n"]))
-        arf.append(u''.join([u"pythonPath=",  self._current_path, utils.path_sep, u"runtime", utils.path_sep, self._runtime, u"\r\n"]))
+        ar = self._current_path.split(utils_core.path_sep)
+        arf.append(u''.join([u"pythonHome=.." + utils_core.path_sep + ar[len(ar)-1] + utils_core.path_sep + u"runtime\r\n"]))
+        arf.append(u''.join([u"pythonPath=",  self._current_path, utils_core.path_sep, u"runtime", utils_core.path_sep, self._runtime, u"\r\n"]))
         arf.append(u"parameters=-S -m agent -runonfly -filelog")        
         if runcode is not None:
             arf.append(u" runcode=" + runcode)
         
-        f=utils.file_open(pth + utils.path_sep + u'native' + utils.path_sep + u'service.properties', 'w', encoding='utf-8') 
+        f=utils_core.file_open(pth + utils_core.path_sep + u'native' + utils_core.path_sep + u'service.properties', 'w', encoding='utf-8') 
         f.write(u''.join(arf))
         f.close()        
         self._os_env = os.environ
-        self._os_env['PYTHONHOME'] = u".." + utils.path_sep + ar[len(ar)-1] + utils.path_sep + u"runtime"
-        self._py_exe = self._current_path + utils.path_sep + u"runtime" + utils.path_sep + self._runtime    
+        self._os_env['PYTHONHOME'] = u".." + utils_core.path_sep + ar[len(ar)-1] + utils_core.path_sep + u"runtime"
+        self._py_exe = self._current_path + utils_core.path_sep + u"runtime" + utils_core.path_sep + self._runtime    
     
     def start_runonfly(self, runcode):
         pargs=[]
@@ -958,9 +958,9 @@ class NativeWindows:
                 badmin=True #XP
         if badmin:
             bsvcok=False
-            cmd=u'"' + u'native' + utils.path_sep + u'dwagsvc.exe" startRunOnFly'
+            cmd=u'"' + u'native' + utils_core.path_sep + u'dwagsvc.exe" startRunOnFly'
             appout = NativeWindowsPopenUnicode(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate() 
-            lines = utils.bytes_to_str(appout[0],"utf8").splitlines()
+            lines = utils_core.bytes_to_str(appout[0],"utf8").splitlines()
             for l in lines:
                 if l=='OK':
                     bsvcok = True
@@ -976,50 +976,50 @@ class NativeWindows:
     
     def executecmd(self, cmd):
         appout = NativeWindowsPopenUnicode(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
-        lines = utils.bytes_to_str(appout[0],"utf8").splitlines()
+        lines = utils_core.bytes_to_str(appout[0],"utf8").splitlines()
         for l in lines:
             if l=='OK':
                 return True
         return False
     
     def stop_service(self):
-        cmd=u'"' + self._install_path + utils.path_sep + u'native' + utils.path_sep + u'dwagsvc.exe" stopService'
+        cmd=u'"' + self._install_path + utils_core.path_sep + u'native' + utils_core.path_sep + u'dwagsvc.exe" stopService'
         return self.executecmd(cmd)
     
     def start_service(self):
-        cmd=u'"' + self._install_path + utils.path_sep + u'native' + utils.path_sep + u'dwagsvc.exe" startService'
+        cmd=u'"' + self._install_path + utils_core.path_sep + u'native' + utils_core.path_sep + u'dwagsvc.exe" startService'
         return self.executecmd(cmd)
     
     def install_service(self):
-        cmd=u'"' + self._install_path + utils.path_sep + u'native' + utils.path_sep + u'dwagsvc.exe" installService'
+        cmd=u'"' + self._install_path + utils_core.path_sep + u'native' + utils_core.path_sep + u'dwagsvc.exe" installService'
         return self.executecmd(cmd)
     
     def delete_service(self):
-        cmd=u'"' + self._install_path + utils.path_sep + u'native' + utils.path_sep + u'dwagsvc.exe" deleteService'
+        cmd=u'"' + self._install_path + utils_core.path_sep + u'native' + utils_core.path_sep + u'dwagsvc.exe" deleteService'
         return self.executecmd(cmd)
         
     def install_auto_run_monitor(self):
-        cmd=u'"' + self._install_path + utils.path_sep + u'native' + utils.path_sep + u'dwagsvc.exe" installAutoRun'
+        cmd=u'"' + self._install_path + utils_core.path_sep + u'native' + utils_core.path_sep + u'dwagsvc.exe" installAutoRun'
         b = self.executecmd(cmd)
         if b==True:
             #Esegue il monitor
-            cmdmon=u'"' + self._install_path + utils.path_sep + u'native' + utils.path_sep + u'dwaglnc.exe" systray' 
+            cmdmon=u'"' + self._install_path + utils_core.path_sep + u'native' + utils_core.path_sep + u'dwaglnc.exe" systray' 
             NativeWindowsPopenUnicode(cmdmon, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
         return b    
     
     def remove_auto_run_monitor(self):
-        cmd=u'"' + self._install_path + utils.path_sep + u'native' + utils.path_sep + u'dwagsvc.exe" removeAutoRun'
+        cmd=u'"' + self._install_path + utils_core.path_sep + u'native' + utils_core.path_sep + u'dwagsvc.exe" removeAutoRun'
         return self.executecmd(cmd)
     
     def install_extra(self):
         return True
     
     def install_shortcuts(self) :        
-        cmd=u'"' + self._install_path + utils.path_sep + u'native' + utils.path_sep + u'dwagsvc.exe" installShortcuts'
+        cmd=u'"' + self._install_path + utils_core.path_sep + u'native' + utils_core.path_sep + u'dwagsvc.exe" installShortcuts'
         return self.executecmd(cmd)
             
     def remove_shortcuts(self) :
-        cmd=u'"' + self._install_path + utils.path_sep + u'native' + utils.path_sep + u'dwagsvc.exe" removeShortcuts'
+        cmd=u'"' + self._install_path + utils_core.path_sep + u'native' + utils_core.path_sep + u'dwagsvc.exe" removeShortcuts'
         return self.executecmd(cmd)
 
 
@@ -1099,12 +1099,12 @@ class Install:
         
         #Load install.json
         appjs=None
-        if utils.path_exists("install.json"):
+        if utils_core.path_exists("install.json"):
             f=None
             try:
-                f = utils.file_open("install.json","rb")
+                f = utils_core.file_open("install.json","rb")
                 s=f.read()
-                appjs = json.loads(utils.bytes_to_str(s,"utf8"))
+                appjs = json.loads(utils_core.bytes_to_str(s,"utf8"))
             except:
                 None
             finally:
@@ -1125,10 +1125,10 @@ class Install:
             self._main_url=self._options["mainurl"]
         if "logpath" in self._options:
             self._install_log_path=self._options["logpath"]
-            if self._install_log_path[len(self._install_log_path)-1:]==utils.path_sep or self._install_log_path[len(self._install_log_path)-1:]=='"':
+            if self._install_log_path[len(self._install_log_path)-1:]==utils_core.path_sep or self._install_log_path[len(self._install_log_path)-1:]=='"':
                 self._install_log_path=self._install_log_path[0:len(self._install_log_path)-1]
-            if utils.path_isdir(self._install_log_path):
-                self._install_log_path = self._install_log_path + utils.path_sep + "dwaginstall.log"
+            if utils_core.path_isdir(self._install_log_path):
+                self._install_log_path = self._install_log_path + utils_core.path_sep + "dwaginstall.log"
         if "gotoopt" in self._options:
             self._gotoopt=self._options["gotoopt"]
         bgui=True
@@ -1143,13 +1143,13 @@ class Install:
             self._gotoopt="install"        
                 
         if "name" in self._options:
-            self._name=utils.str_new(self._options["name"])
+            self._name=utils_core.str_new(self._options["name"])
             self._native.set_name(self._name)
         else:
             self._native.set_name(u"DWAgent")
         
-        self._current_path=utils.os_getcwd()
-        if self._current_path.endswith(utils.path_sep) is True:
+        self._current_path=utils_core.os_getcwd()
+        if self._current_path.endswith(utils_core.path_sep) is True:
             self._current_path=self._current_path[0:len(self._current_path)-1]
         self._native.set_current_path(self._current_path)
         if self._silent:
@@ -1186,7 +1186,7 @@ class Install:
 
     '''def _read_info_file(self):
         try:
-            f = utils.file_open("info.json")
+            f = utils_core.file_open("info.json")
             prop = json.loads(f.read())
             f.close()   
             return prop
@@ -1200,7 +1200,7 @@ class Install:
         if not self._silent:
             chs = ui.Chooser()
             if "welcometext" in self._options:
-                m=utils.str_new(self._options["welcometext"])
+                m=uutils_corestr_new(self._options["welcometext"])
             else:            
                 m=self._get_message('welcomeLicense') + "\n\n" 
                 m+=self._get_message('welcomeSecurity') + "\n\n" 
@@ -1289,7 +1289,7 @@ class Install:
                 try:
                     if self._install_log_path is not None:
                         if self._install_log is None:
-                            self._install_log = utils.file_open(self._install_log_path, "w", encoding='utf-8')
+                            self._install_log = uutils_corefile_open(self._install_log_path, "w", encoding='utf-8')
                         self._append_log(self._get_message('alreadyInstalled'))
                         self._install_log.close()
                         self._install_log=None
@@ -1323,7 +1323,7 @@ class Install:
             pth=pth[4:]
             self._install_path.set(pth)
         if not self._silent:
-            if not self._bmock and utils.path_exists(pth):
+            if not self._bmock and uutils_corepath_exists(pth):
                 m=self._get_message('confirmInstall').format(pth) + u'\n' + self._get_message('warningRemovePath')
             else:
                 m=self._get_message('confirmInstall').format(pth)
@@ -1354,7 +1354,7 @@ class Install:
     def _download_file(self, node_url, name, version, pstart,  pend):
         pth = self._install_path.get()
         url = node_url +  "getAgentFile.dw?name=" + name + "&version=" + version
-        file_name = pth + utils.path_sep + name
+        file_name = pth + uutils_corepath_sep + name
         #Scarica il file
         rtp = communication.Response_Transfer_Progress({'on_data': self._download_progress})
         rtp.set_property('file_name', name)
@@ -1364,10 +1364,10 @@ class Install:
     
     def _check_hash_file(self, name, shash):
         pth = self._install_path.get()
-        fpath=pth + utils.path_sep + name
+        fpath=pth + uutils_corepath_sep + name
         
         md5 = hashlib.md5()
-        with utils.file_open(fpath,'rb') as f: 
+        with uutils_corefile_open(fpath,'rb') as f: 
             for chunk in iter(lambda: f.read(8192), b''): 
                 md5.update(chunk)
         h = md5.hexdigest()
@@ -1378,20 +1378,20 @@ class Install:
         pth = self._install_path.get()
         #Decoprime il file
         if unzippath!='':
-            unzippath+=utils.path_sep 
-        fpath=pth + utils.path_sep + name
-        zfile = utils.zipfile_open(fpath)
+            unzippath+=uutils_corepath_sep 
+        fpath=pth + uutils_corepath_sep + name
+        zfile = uutils_corezipfile_open(fpath)
         for nm in zfile.namelist():
-            npath=pth + utils.path_sep + unzippath
+            npath=pth + uutils_corepath_sep + unzippath
             appnm = nm
             appar = nm.split("/")
             if (len(appar)>1):
                 appnm = appar[len(appar)-1]
-                npath+= nm[0:len(nm)-len(appnm)].replace("/",utils.path_sep)
-            if not utils.path_exists(npath):
-                utils.path_makedirs(npath)
+                npath+= nm[0:len(nm)-len(appnm)].replace("/",uutils_corepath_sep)
+            if not uutils_corepath_exists(npath):
+                uutils_corepath_makedirs(npath)
             npath+=appnm
-            fd = utils.file_open(npath,"wb")
+            fd = uutils_corefile_open(npath,"wb")
             fd.write(zfile.read(nm))
             fd.close()
         zfile.close()
@@ -1399,22 +1399,22 @@ class Install:
         #TO REMOVE 03/11/2021 KEEP COMPATIBILITY WITH OLD LINUX INSTALLER
         try:
             if name=="agent.zip":
-                if utils.path_exists(unzippath + "daemon.pyc"):
-                    utils.path_remove(unzippath + "daemon.pyc")                    
+                if uutils_corepath_exists(unzippath + "daemon.pyc"):
+                    uutils_corepath_remove(unzippath + "daemon.pyc")                    
         except:
             None
     
     def load_prop_json(self, fname):
-        f = utils.file_open(fname, "rb")
+        f = uutils_corefile_open(fname, "rb")
         s=f.read()
-        prp  = json.loads(utils.bytes_to_str(s,"utf8"))
+        prp  = json.loads(uutils_corebytes_to_str(s,"utf8"))
         f.close()
         return prp        
     
     def store_prop_json(self, prp, fname):
         s = json.dumps(prp, sort_keys=True, indent=1)
-        f = utils.file_open(fname, 'wb')
-        f.write(utils.str_to_bytes(s,"utf8"))
+        f = uutils_corefile_open(fname, 'wb')
+        f.write(uutils_corestr_to_bytes(s,"utf8"))
         f.close()
     
     def obfuscate_password(self, pwd):
@@ -1426,11 +1426,11 @@ class Install:
     def _copy_custom_images(self, prpconf, pth):
         ar = ["topimage", "logoxos", "logo16x16", "logo32x32", "logo48x48"]
         for nm in ar:
-            if nm in prpconf and utils.path_exists(prpconf[nm]):
-                dstpth = pth + utils.path_sep + "ui" + utils.path_sep + "images" + utils.path_sep + "custom"
-                if not utils.path_exists(dstpth):
-                    utils.path_makedirs(dstpth)
-                utils.path_copy(self._options[nm], dstpth + utils.path_sep + self._options[nm])
+            if nm in prpconf and uutils_corepath_exists(prpconf[nm]):
+                dstpth = pth + uutils_corepath_sep + "ui" + uutils_corepath_sep + "images" + uutils_corepath_sep + "custom"
+                if not uutils_corepath_exists(dstpth):
+                    uutils_corepath_makedirs(dstpth)
+                uutils_corepath_copy(self._options[nm], dstpth + uutils_corepath_sep + self._options[nm])
     
     def _download_files(self, pstart, pend):
         iniperc=0;
@@ -1457,16 +1457,16 @@ class Install:
             prpconf["name"] = self._options["name"]
         if "topinfo" in self._options:
             prpconf["topinfo"]=self._options["topinfo"]
-        if "topimage" in self._options and utils.path_exists(self._options["topimage"]):
+        if "topimage" in self._options and uutils_corepath_exists(self._options["topimage"]):
             prpconf["topimage"]=self._options["topimage"]                        
-        if "logoxos" in self._options and utils.path_exists(self._options["logoxos"]):
+        if "logoxos" in self._options and uutils_corepath_exists(self._options["logoxos"]):
             prpconf["logoxos"]=self._options["logoxos"]
-            self._native.set_logo_path(utils.path_sep + u"ui" + utils.path_sep + u"images" + utils.path_sep + u"custom" + utils.path_sep + prpconf["logoxos"])        
-        if "logo16x16" in self._options and utils.path_exists(self._options["logo16x16"]):
+            self._native.set_logo_path(uutils_corepath_sep + u"ui" + uutils_corepath_sep + u"images" + uutils_corepath_sep + u"custom" + uutils_corepath_sep + prpconf["logoxos"])        
+        if "logo16x16" in self._options and uutils_corepath_exists(self._options["logo16x16"]):
             prpconf["logo16x16"]=self._options["logo16x16"]
-        if "logo32x32" in self._options and utils.path_exists(self._options["logo32x32"]):
+        if "logo32x32" in self._options and uutils_corepath_exists(self._options["logo32x32"]):
             prpconf["logo32x32"]=self._options["logo32x32"]
-        if "logo48x48" in self._options and utils.path_exists(self._options["logo48x48"]):
+        if "logo48x48" in self._options and uutils_corepath_exists(self._options["logo48x48"]):
             prpconf["logo48x48"]=self._options["logo48x48"]
         if "leftcolor" in self._options:
             prpconf["leftcolor"]=self._options["leftcolor"]                    
@@ -1488,8 +1488,8 @@ class Install:
                         bmonok=True
                     except:
                         None
-                if utils.path_exists(self._install_path.get() + utils.path_sep +  u'config.json'):				
-                    appconf = self.load_prop_json(self._install_path.get() + utils.path_sep +  u'config.json')
+                if uutils_corepath_exists(self._install_path.get() + uutils_corepath_sep +  u'config.json'):				
+                    appconf = self.load_prop_json(self._install_path.get() + uutils_corepath_sep +  u'config.json')
                     if "preferred_run_user" in appconf:
                         prpconf["preferred_run_user"]=appconf["preferred_run_user"]
                     if bmonok:
@@ -1509,11 +1509,11 @@ class Install:
         
         
         self._copy_custom_images(prpconf, pth)
-        self.store_prop_json(prpconf, pth + utils.path_sep + u'config.json')
+        self.store_prop_json(prpconf, pth + uutils_corepath_sep + u'config.json')
         
-        if not (self._runWithoutInstall and utils.path_exists(pth + utils.path_sep + u"config.json") 
-                and utils.path_exists(pth + utils.path_sep + u"fileversions.json") and utils.path_exists(pth + utils.path_sep + u"agent.py") 
-                and utils.path_exists(pth + utils.path_sep + u"communication.py") and utils.path_exists(pth + utils.path_sep + u"ipc.py")):
+        if not (self._runWithoutInstall and uutils_corepath_exists(pth + uutils_corepath_sep + u"config.json") 
+                and uutils_corepath_exists(pth + uutils_corepath_sep + u"fileversions.json") and uutils_corepath_exists(pth + uutils_corepath_sep + u"agent.py") 
+                and uutils_corepath_exists(pth + uutils_corepath_sep + u"communication.py") and uutils_corepath_exists(pth + uutils_corepath_sep + u"ipc.py")):
             msg=dwnmsg.format('files.xml')
             self._uinterface.wait_message(msg, iniperc,  pstart)
             prpfiles = communication.get_url_prop(self._get_main_url() + "getAgentFile.dw?name=files.xml", self._proxy )
@@ -1545,10 +1545,10 @@ class Install:
             pos = pstart
             for i in range(len(fls)):
                 fnm=fls[i]['name'];
-                file_name = pth + utils.path_sep + fnm
+                file_name = pth + uutils_corepath_sep + fnm
                 #Elimina file
                 try:
-                    utils.path_remove(file_name)
+                    uutils_corepath_remove(file_name)
                 except Exception:
                     None
                 #Scarica file
@@ -1565,41 +1565,41 @@ class Install:
                 self._append_log(u"Unzip file " + fnm + u".OK!")
                 #Elimina file
                 try:
-                    utils.path_remove(file_name)
+                    uutils_corepath_remove(file_name)
                 except Exception:
                     None
                 fileversions[fnm ]=prpfiles[fnm + '@version']
                 pos+=step
             
             #Scrive files.json
-            self.store_prop_json(fileversions, pth + utils.path_sep + u'fileversions.json')
+            self.store_prop_json(fileversions, pth + uutils_corepath_sep + u'fileversions.json')
         
     
     def _count_file_in_path(self, valid_path):
         x = 0
-        for root, dirs, files in utils.path_walk(valid_path):
+        for root, dirs, files in uutils_corepath_walk(valid_path):
             for f in files:
                 x = x+1
         return x
 
     def _copy_tree_file(self, fs, fd, msginfo):
-        if utils.path_isdir(fs):
-            if not utils.path_exists(fd):
-                utils.path_makedirs(fd)
-            lst=utils.path_list(fs)
+        if uutils_corepath_isdir(fs):
+            if not uutils_corepath_exists(fd):
+                uutils_corepath_makedirs(fd)
+            lst=uutils_corepath_list(fs)
             for fname in lst:
-                self._copy_tree_file(fs + utils.path_sep + fname, fd + utils.path_sep + fname, msginfo)
+                self._copy_tree_file(fs + uutils_corepath_sep + fname, fd + uutils_corepath_sep + fname, msginfo)
         else:
             msginfo["progr"]+=msginfo["step"]
             perc =  int(((msginfo["progr"] - msginfo["pstart"] ) / (msginfo["pend"] - msginfo["pstart"] )) * 100.0)
             self._uinterface.wait_message(msginfo["message"], perc,  msginfo["progr"])
-            if utils.path_exists(fd):
-                utils.path_remove(fd)
-            if utils.path_islink(fs):
-                linkto = utils.path_readlink(fs)
-                utils.path_symlink(linkto, fd)
+            if uutils_corepath_exists(fd):
+                uutils_corepath_remove(fd)
+            if uutils_corepath_islink(fs):
+                linkto = uutils_corepath_readlink(fs)
+                uutils_corepath_symlink(linkto, fd)
             else:
-                utils.path_copy(fs, fd)
+                uutils_corepath_copy(fs, fd)
                 
         
     def _copy_tree(self, fs, ds, msg, pstart, pend):
@@ -1614,7 +1614,7 @@ class Install:
             return 
             
         pth = self._install_path.get()
-        if utils.path_exists(pth):
+        if uutils_corepath_exists(pth):
             self._uinterface.wait_message(self._get_message('removeFile'), None, pstart)
             try:
                 try:
@@ -1622,14 +1622,14 @@ class Install:
                     self._native.delete_service()
                 except:
                     None 
-                utils.path_remove(pth)
+                uutils_corepath_remove(pth)
             except:
                 raise Exception(u'Can not remove path.') #Inserire messaggio in lingua
             
         #Crea le cartelle necessarie
         try:
             self._uinterface.wait_message(self._get_message('pathCreating'),  None, pend)
-            utils.path_makedirs(pth)
+            uutils_corepath_makedirs(pth)
         except:
             raise Exception(self._get_message('pathNotCreate'))
         
@@ -1640,9 +1640,9 @@ class Install:
             time.sleep(1)
             self._uinterface.wait_message(msg,  None,  pend)
             return
-        ds=self._install_path.get() + utils.path_sep + "runtime"
+        ds=self._install_path.get() + uutils_corepath_sep + "runtime"
         msg=self._get_message('copyFiles')
-        if utils.path_exists(_RUNTIME_PATH):
+        if uutils_corepath_exists(_RUNTIME_PATH):
             self._copy_tree(_RUNTIME_PATH,ds,msg,pstart,pend)
         else:
             if not self._native.prepare_runtime_by_os(ds):
@@ -1657,18 +1657,18 @@ class Install:
             self._uinterface.wait_message(msg,  None,  pend)
             return
         
-        if not utils.path_exists(_NATIVE_PATH):
+        if not uutils_corepath_exists(_NATIVE_PATH):
             raise Exception(self._get_message('missingNative'))            
-        ds=self._install_path.get() + utils.path_sep + "native"
+        ds=self._install_path.get() + uutils_corepath_sep + "native"
         msg=self._get_message('copyFiles')
         self._copy_tree(_NATIVE_PATH,ds,msg,0.76, 0.8)
         
         #CREATE installer.ver
-        dsver=ds + utils.path_sep + "installer.ver"
-        if utils.path_exists(dsver):
-            utils.path_remove(dsver)
-        fver = utils.file_open(dsver,"wb")
-        fver.write(utils.str_to_bytes(str(_INSTALLER_VERSION)))
+        dsver=ds + uutils_corepath_sep + "installer.ver"
+        if uutils_corepath_exists(dsver):
+            uutils_corepath_remove(dsver)
+        fver = uutils_corefile_open(dsver,"wb")
+        fver.write(uutils_corestr_to_bytes(str(_INSTALLER_VERSION)))
         fver.close()
         
     
@@ -2031,8 +2031,8 @@ class Install:
                 chs.next_step(self.step_config_install_request)
                 return chs
             else:
-                self._append_log(u"Error Configure: " + utils.exception_to_string(e))
-                return ui.ErrorDialog(utils.exception_to_string(e))
+                self._append_log(u"Error Configure: " + ututils_corexception_to_string(e))
+                return ui.ErrorDialog(ututils_corexception_to_string(e))
         finally:
             if page is not None:
                 page.close()
@@ -2041,25 +2041,25 @@ class Install:
         try:
             if not self._bmock:
                 if self._install_log is not None:
-                    self._install_log.write(utils.str_new(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())) + u" - " + txt + u"\n")
+                    self._install_log.write(ututils_coretr_new(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())) + u" - " + txt + u"\n")
                     self._install_log.flush()
         except:
             None    
     
     def _runonfly_update(self,pthsrc,pthdst):
-        lst=utils.path_list(pthsrc)
+        lst=ututils_coreath_list(pthsrc)
         for fname in lst:
-            if utils.path_isfile(pthsrc + utils.path_sep + fname):
-                if utils.path_isfile(pthdst + utils.path_sep + fname):
-                    utils.path_remove(pthdst + utils.path_sep + fname)
-                utils.path_copy(pthsrc + utils.path_sep + fname, pthdst + utils.path_sep + fname)
-            elif utils.path_isdir(pthsrc + utils.path_sep + fname):
-                self._runonfly_update(pthsrc + utils.path_sep + fname,pthdst + utils.path_sep + fname)
+            if ututils_coreath_isfile(pthsrc + ututils_coreath_sep + fname):
+                if ututils_coreath_isfile(pthdst + ututils_coreath_sep + fname):
+                    ututils_coreath_remove(pthdst + ututils_coreath_sep + fname)
+                ututils_coreath_copy(pthsrc + ututils_coreath_sep + fname, pthdst + ututils_coreath_sep + fname)
+            elif ututils_coreath_isdir(pthsrc + ututils_coreath_sep + fname):
+                self._runonfly_update(pthsrc + ututils_coreath_sep + fname,pthdst + ututils_coreath_sep + fname)
     
     
     #COMPATIBILITA' VERSIONI PRECEDENTI DI RUNONFLY
     def _fix_runonfly_old_version(self):
-        if utils.path_exists(u"fileversions.json"):            
+        if ututils_coreath_exists(u"fileversions.json"):            
             fver = self.load_prop_json('fileversions.json')
             if 'agent.zip' in fver:
                 lver = int(fver['agent.zip'])
@@ -2068,7 +2068,7 @@ class Install:
                     sys.path.insert(0,self._install_path.get())
                     objlib = importlib.import_module("agent")
                     try:
-                        if utils.is_py2():
+                        if ututils_cores_py2():
                             reload(objlib)                            
                         else:
                             importlib.reload(objlib)
@@ -2136,8 +2136,8 @@ class Install:
                 self._main_monitor.start("runonfly")
                 self._uinterface.wait_panel(pnl,self._destroy_main_monitor, allowclose=True)
             except Exception as e:
-                print(u"Error: " + utils.exception_to_string(e) + u"\n" + utils.get_stacktrace_string())
-                self._append_log(u"Error: " + utils.exception_to_string(e) + u"\n" + utils.get_stacktrace_string())
+                print(u"Error: " + ututils_corexception_to_string(e) + u"\n" + ututils_coreet_stacktrace_string())
+                self._append_log(u"Error: " + ututils_corexception_to_string(e) + u"\n" + ututils_coreet_stacktrace_string())
                 self._uinterface.wait_message(u"".join(appwmsg), allowclose=True)
     
     def _destroy_main_monitor(self):
@@ -2176,7 +2176,7 @@ class Install:
         
         #Start agent
         if self._proxy is not None:
-            prpconf = self.load_prop_json(self._install_path.get() + utils.path_sep +  u'config.json')
+            prpconf = self.load_prop_json(self._install_path.get() + ututils_coreath_sep +  u'config.json')
             if self._proxy.get_type() is not None:
                 prpconf['proxy_type'] = self._proxy.get_type()
             if self._proxy.get_host() is not None:
@@ -2191,15 +2191,15 @@ class Install:
                 prpconf['proxy_password'] = self.obfuscate_password(self._proxy.get_password())
             else:
                 prpconf['proxy_password'] = ""
-            self.store_prop_json(prpconf, self._install_path.get() + utils.path_sep +  u'config.json')
+            self.store_prop_json(prpconf, self._install_path.get() + ututils_coreath_sep +  u'config.json')
         
         if curui.get_key() is not None and curui.get_key()=='retryRunOnFly':
             if curui.get_variable().get()=='configProxy':
                 curui.set_key('runonfly')
                 return self.step_configure_proxy_type(curui)
         
-        self._append_log(u"Changing current directory to " + utils.path_absname(self._install_path.get()) + " ...")
-        utils.system_changedir(self._install_path.get())
+        self._append_log(u"Changing current directory to " + ututils_coreath_absname(self._install_path.get()) + " ...")
+        ututils_coreystem_changedir(self._install_path.get())
         self._runWithoutInstallAgentCloseEnd=False
         runcode_notfound=False
         runcode_connected=False
@@ -2208,32 +2208,32 @@ class Install:
             while self._runWithoutInstallAgentAlive:
                 self._uinterface.wait_message(self._get_message("runWithoutInstallationStarting"))
                 self._append_log(u"Starting...")
-                if utils.path_exists(u"update"):
+                if ututils_coreath_exists(u"update"):
                     self._append_log(u"Updating...")
                     self._uinterface.wait_message(self._get_message("runWithoutInstallationUpdating"))
                     self._runonfly_update(u"update",".")
-                    utils.path_remove(u"update")
+                    ututils_coreath_remove(u"update")
             
                 #COMPATIBILITA' VERSIONI PRECEDENTI DI RUNONFLY
                 if self._fix_runonfly_old_version():
-                    if utils.path_exists(u"update"):
+                    if ututils_coreath_exists(u"update"):
                         self._uinterface.wait_message(self._get_message("runWithoutInstallationUpdating"))
                         self._runonfly_update(u"update",".")
-                        utils.path_remove(u"update")
+                        ututils_coreath_remove(u"update")
             
                 #CHECK FILE
-                if utils.path_exists(u"dwagent.pid"):
-                    utils.path_remove(u"dwagent.pid")
-                if utils.path_exists(u"dwagent.start"):
-                    utils.path_remove(u"dwagent.start")
-                if utils.path_exists(u"dwagent.stop"):
-                    utils.path_remove(u"dwagent.stop")
-                if utils.path_exists(u"dwagent.status"):
-                    utils.path_remove(u"dwagent.status")
+                if ututils_coreath_exists(u"dwagent.pid"):
+                    ututils_coreath_remove(u"dwagent.pid")
+                if ututils_coreath_exists(u"dwagent.start"):
+                    ututils_coreath_remove(u"dwagent.start")
+                if ututils_coreath_exists(u"dwagent.stop"):
+                    ututils_coreath_remove(u"dwagent.stop")
+                if ututils_coreath_exists(u"dwagent.status"):
+                    ututils_coreath_remove(u"dwagent.status")
                 
                 #Scrive pid
-                f = utils.file_open(u"dwagent.pid", 'wb')
-                f.write(utils.str_to_bytes(str(os.getpid())))
+                f = ututils_coreile_open(u"dwagent.pid", 'wb')
+                f.write(ututils_coretr_to_bytes(str(os.getpid())))
                 f.close()            
                  
                 #Avvia il servizio
@@ -2244,13 +2244,13 @@ class Install:
                     ponfly=self._native.start_runonfly(None)
                 #Attende L'avvio
                 cnt=0
-                while (not utils.path_exists(u"dwagent.start")):
+                while (not ututils_coreath_exists(u"dwagent.start")):
                     time.sleep(1)
                     cnt+=1
                     if cnt>10: #10 Secondi
                         raise Exception("") #GESTITO SOTTO
-                if utils.path_exists(u"dwagent.start"):
-                    utils.path_remove(u"dwagent.start")
+                if ututils_coreath_exists(u"dwagent.start"):
+                    ututils_coreath_remove(u"dwagent.start")
                 self._append_log(u"Started.")
                 
                 #GESTISCE STATO
@@ -2293,7 +2293,7 @@ class Install:
                 if runcode_notfound==False:
                     self._uinterface.wait_message(self._get_message("runWithoutInstallationClosing"))
                 
-                f = utils.file_open(u"dwagent.stop", 'wb')
+                f = ututils_coreile_open(u"dwagent.stop", 'wb')
                 f.close()
                 cnt=0
                 while self._native.is_task_running(agpid) and (ponfly is None or ponfly.poll() is None):
@@ -2307,7 +2307,7 @@ class Install:
                 time.sleep(1)
                 
         except Exception as e:
-            f = utils.file_open(u"dwagent.stop", 'wb')
+            f = ututils_coreile_open(u"dwagent.stop", 'wb')
             f.close()
             try:
                 if pstipc is not None:
@@ -2315,14 +2315,14 @@ class Install:
                     pstipc=None
             except:
                 None
-            utils.system_changedir(self._current_path)
+            ututils_coreystem_changedir(self._current_path)
             self._runWithoutInstallAgentCloseEnd=True
             #Se non è partito l'agente potrebbe dipendere da un problema di file corrotti
-            self._append_log(u"Error: " + utils.exception_to_string(e) + u"\n" + utils.get_stacktrace_string())
-            return ui.Message(self._get_message("runWithoutInstallationUnexpectedError").format(utils.path_absname(self._install_path.get())) + "\n\n" + utils.exception_to_string(e))
+            self._append_log(u"Error: " + utiutils_coreception_to_string(e) + u"\n" + utiutils_coret_stacktrace_string())
+            return ui.Message(self._get_message("runWithoutInstallationUnexpectedError").format(utiutils_coreth_absname(self._install_path.get())) + "\n\n" + utiutils_coreception_to_string(e))
             
         
-        utils.system_changedir(self._current_path)
+        utiutils_corestem_changedir(self._current_path)
         self._runWithoutInstallAgentCloseEnd=True
         if self._runWithoutInstallAgentCloseByClient:            
             return ui.Message(self._get_message('runWithoutInstallationEnd'))  
@@ -2343,9 +2343,9 @@ class Install:
             
     
     def step_install(self, curui):
-        if utils.path_exists(self._current_path + utils.path_sep + "ambient.dev"):
+        if utiutils_coreth_exists(self._current_path + utiutils_coreth_sep + "ambient.dev"):
             self._ambient="DEV"
-        elif utils.path_exists(self._current_path + utils.path_sep + "ambient.qa"):
+        elif utiutils_coreth_exists(self._current_path + utiutils_coreth_sep + "ambient.qa"):
             self._ambient="QA"
             
         if not self._silent:
@@ -2360,13 +2360,13 @@ class Install:
         
         if self._runWithoutInstall:
             if self._name is None:
-                self._install_path.set(u".." + utils.path_sep + u"dwagentonfly")
+                self._install_path.set(u".." + utiutils_coreth_sep + u"dwagentonfly")
             else:
-                self._install_path.set(u".." + utils.path_sep + self._name.lower() + u"onfly")
+                self._install_path.set(u".." + utiutils_coreth_sep + self._name.lower() + u"onfly")
             #Carica proxy da file
-            if self._runWithoutInstallProxySet==False and utils.path_exists(self._install_path.get() + utils.path_sep + u"config.json"):
+            if self._runWithoutInstallProxySet==False and utiutils_coreth_exists(self._install_path.get() + utiutils_coreth_sep + u"config.json"):
                 self._runWithoutInstallProxySet=True
-                prpconf=self.load_prop_json(self._install_path.get() + utils.path_sep + u"config.json")
+                prpconf=self.load_prop_json(self._install_path.get() + utiutils_coreth_sep + u"config.json")
                 if 'proxy_type' in prpconf and prpconf['proxy_type']!="":
                     self._proxy=communication.ProxyInfo()
                     self._proxy.set_type(prpconf['proxy_type'])
@@ -2398,12 +2398,12 @@ class Install:
                 self._proxy.set_password(self._options["proxyPassword"])
         
         pth = self._install_path.get()
-        if pth.endswith(utils.path_sep) is True:
+        if pth.endswith(utiutils_coreth_sep) is True:
             pth=pth[0:len(pth)-1]
         
         if not self._bmock:
-            if self._runWithoutInstall and not utils.path_exists(pth):
-                utils.path_makedir(pth)
+            if self._runWithoutInstall and not utiutils_coreth_exists(pth):
+                utiutils_coreth_makedir(pth)
                 
         #Inizializza log
         if not self._bmock:
@@ -2411,21 +2411,21 @@ class Install:
                 try:
                     if self._install_log_path is not None:
                         try:
-                            self._install_log = utils.file_open(self._install_log_path, "wb", encoding='utf-8')
+                            self._install_log = utiutils_corele_open(self._install_log_path, "wb", encoding='utf-8')
                         except:
                             None
                     if self._install_log is None:
-                        self._install_log = utils.file_open(u'install.log', "wb", encoding='utf-8')
+                        self._install_log = utiutils_corele_open(u'install.log', "wb", encoding='utf-8')
                 except:
                     try:
-                        self._install_log = utils.file_open(u".." + utils.path_sep + u'dwagent_install.log', "wb", encoding='utf-8')                    
+                        self._install_log = utiutils_corele_open(u".." + utiutils_coreth_sep + u'dwagent_install.log', "wb", encoding='utf-8')                    
                     except:
                         None
             
         
-        self._install_path.set(utils.str_new(pth))
+        self._install_path.set(utiutils_corer_new(pth))
         #Imposta path per native
-        self._native.set_install_path(utils.str_new(pth))
+        self._native.set_install_path(utiutils_corer_new(pth))
         self._native.set_install_log(self._install_log)
             
             
@@ -2450,14 +2450,14 @@ class Install:
                                         
             #Copia Licenza
             if not self._bmock:
-                pthlic = self._install_path.get() + utils.path_sep + u"LICENSES"
-                if not utils.path_exists(pthlic):
-                    utils.path_makedirs(pthlic)
+                pthlic = self._install_path.get() + utiutils_coreth_sep + u"LICENSES"
+                if not utiutils_coreth_exists(pthlic):
+                    utiutils_coreth_makedirs(pthlic)
                     #if not self._runWithoutInstall:
-                    utils.path_copy(u"LICENSES" + utils.path_sep + u"README", self._install_path.get() + utils.path_sep + u"README")
-                    utils.path_copy(u"LICENSES" + utils.path_sep + u"runtime", pthlic + utils.path_sep + u"runtime")
-                    utils.path_copy(u"LICENSES" + utils.path_sep + u"core", pthlic + utils.path_sep + u"core")
-                    utils.path_copy(u"LICENSES" + utils.path_sep + u"ui", pthlic + utils.path_sep + u"ui")
+                    utiutils_coreth_copy(u"LICENSES" + utiutils_coreth_sep + u"README", self._install_path.get() + utiutils_coreth_sep + u"README")
+                    utiutils_coreth_copy(u"LICENSES" + utiutils_coreth_sep + u"runtime", pthlic + utiutils_coreth_sep + u"runtime")
+                    utiutils_coreth_copy(u"LICENSES" + utiutils_coreth_sep + u"core", pthlic + utiutils_coreth_sep + u"core")
+                    utiutils_coreth_copy(u"LICENSES" + utiutils_coreth_sep + u"ui", pthlic + utiutils_coreth_sep + u"ui")
             #Download file
             try:
                 self._append_log(u"Download files...")
@@ -2468,10 +2468,10 @@ class Install:
                 self._append_log(u"Download files.OK!")
             except Exception as e:
                 if not self._silent:
-                    self._append_log(u"Error Download files: " + utils.exception_to_string(e) + u"\n" + utils.get_stacktrace_string())
+                    self._append_log(u"Error Download files: " + utiutils_coreception_to_string(e) + u"\n" + utiutils_coret_stacktrace_string())
                     chs = ui.Chooser()
                     chs.set_key("retryDownload")
-                    chs.set_message(utils.exception_to_string(e) + u"\n\n" + self._get_message('errorConnectionQuestion'))
+                    chs.set_message(utiutils_coreception_to_string(e) + u"\n\n" + self._get_message('errorConnectionQuestion'))
                     chs.add("configProxy", self._get_message('yes'))
                     chs.add("noTryAgain", self._get_message('noTryAgain'))
                     chs.set_variable(ui.VarString("noTryAgain"))
@@ -2483,7 +2483,7 @@ class Install:
                     chs.next_step(self.step_install)
                     return chs
                 else:
-                    raise Exception(u"Error Download files: " + utils.exception_to_string(e) + u"\n" + utils.get_stacktrace_string())
+                    raise Exception(u"Error Download files: " + utiutils_coreception_to_string(e) + u"\n" + utiutils_coret_stacktrace_string())
             
             if not self._runWithoutInstall:
                 #Copia Runtime
@@ -2535,7 +2535,7 @@ class Install:
             else:
                 #Aggiorna cacerts.pem
                 if not self._bmock:
-                    utils.path_copy('cacerts.pem',self._install_path.get() + utils.path_sep + 'cacerts.pem')
+                    utiutils_coreth_copy('cacerts.pem',self._install_path.get() + utiutils_coreth_sep + 'cacerts.pem')
                 
                 #Copia Native
                 self._append_log(u"Copy native...")
@@ -2548,8 +2548,8 @@ class Install:
                     return self.step_runonfly(curui)
             
         except Exception as e:
-            self._append_log(u"Error Install: " + utils.exception_to_string(e))
-            return ui.ErrorDialog(utils.exception_to_string(e)) 
+            self._append_log(u"Error Install: " + utiutils_coreception_to_string(e))
+            return ui.ErrorDialog(utiutils_coreception_to_string(e)) 
             
 
 class Uninstall:
@@ -2585,15 +2585,15 @@ class Uninstall:
         
         confjson={}
         try:
-            f = utils.file_open("config.json", "rb")
+            f = utiutils_corele_open("config.json", "rb")
             s=f.read()
-            confjson = json.loads(utils.bytes_to_str(s,"utf8"))
+            confjson = json.loads(utiutils_coretes_to_str(s,"utf8"))
             f.close()
         except Exception:
             None
         prmsui={}
         if "name" in confjson:
-            self._name=utils.str_new(confjson["name"])
+            self._name=utiutils_corer_new(confjson["name"])
             self._native.set_name(self._name)
         else:
             self._native.set_name(u"DWAgent")
@@ -2601,8 +2601,8 @@ class Uninstall:
         if "topinfo" in confjson:
             prmsui["topinfo"]=confjson["topinfo"]
         if "topimage" in confjson:
-            prmsui["topimage"]=u"ui" + utils.path_sep + u"images" + utils.path_sep + u"custom" + utils.path_sep + confjson["topimage"]
-        applg = gdi._get_logo_from_conf(confjson, u"ui" + utils.path_sep + u"images" + utils.path_sep + u"custom" + utils.path_sep)
+            prmsui["topimage"]=u"ui" + utiutils_coreth_sep + u"images" + utiutils_coreth_sep + u"custom" + utiutils_coreth_sep + confjson["topimage"]
+        applg = gdi._get_logo_from_conf(confjson, u"ui" + utiutils_coreth_sep + u"images" + utiutils_coreth_sep + u"custom" + utiutils_coreth_sep)
         if applg != "":
             prmsui["logo"]=applg
         if "leftcolor" in confjson:
@@ -2626,7 +2626,7 @@ class Uninstall:
             return ui.Message(self._get_message('notInstalled'))
         else:
             if self._silent==False:
-                self._install_path = utils.str_new(self._install_path)
+                self._install_path = utiutils_corer_new(self._install_path)
                 #Conferma disinstallazione
                 chs = ui.Chooser()
                 chs.set_message(self._get_message('confirmUninstall'))
@@ -2659,7 +2659,7 @@ class Uninstall:
     def _append_log(self, txt):
         try:
             if self._install_log is not None:
-                self._install_log.write(utils.str_new(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())) + u" - " + txt + u"\n")
+                self._install_log.write(utiutils_corer_new(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())) + u" - " + txt + u"\n")
                 self._install_log.flush()
         except:
             None   
@@ -2671,10 +2671,10 @@ class Uninstall:
         try:
             #Inizializza log
             try:
-                self._install_log = utils.file_open(u"unistall.log", "wb", encoding='utf-8')
+                self._install_log = utiutils_corele_open(u"unistall.log", "wb", encoding='utf-8')
             except:
                 try:
-                    self._install_log = utils.file_open(u".." + utils.path_sep + u"dwagent_unistall.log", "wb", encoding='utf-8')                    
+                    self._install_log = utiutils_corele_open(u".." + utiutils_coreth_sep + u"dwagent_unistall.log", "wb", encoding='utf-8')                    
                 except:
                     None
             
@@ -2691,15 +2691,15 @@ class Uninstall:
             self._uninstall_shortcuts(0.81, 1)
     
             #Scrive file per eliminazione della cartella
-            f = utils.file_open(self._install_path + utils.path_sep + u"agent.uninstall", "w")
+            f = utiutils_corele_open(self._install_path + utiutils_coreth_sep + u"agent.uninstall", "w")
             f.write("\x00")
             f.close()
 
             self._append_log(u"End Uninstallation.")
             return ui.Message(self._get_message('endUninstall'))
         except Exception as e:
-            self._append_log(u"Error Uninstall: " + utils.exception_to_string(e))
-            return ui.ErrorDialog(utils.exception_to_string(e))
+            self._append_log(u"Error Uninstall: " + utiutils_coreception_to_string(e))
+            return ui.ErrorDialog(utiutils_coreception_to_string(e))
             
 
 def fmain(args): #SERVE PER MACOS APP

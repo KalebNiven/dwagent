@@ -9,7 +9,7 @@ import ipc
 import agent
 import threading
 import native
-import utils
+import utils_core
 import ctypes
 import time
 import os
@@ -28,7 +28,7 @@ class ProcessCaptureScreen(threading.Thread):
         self._bdestory=False
         self._screen_module = None
         self._screen_libver = 0        
-        self._cnt_image = utils.Counter()
+        self._cnt_image = utils_core.Counter()
         self._status = "C" # I INIT; O OPEN; C CLOSE
         self._capture_allowed=True
         self._capture_fallback_ok=False
@@ -43,13 +43,13 @@ class ProcessCaptureScreen(threading.Thread):
         self._curx=-1
         self._cury=-1
         self._curvis=False        
-        self._curcounter=utils.Counter()
+        self._curcounter=utils_core.Counter()
         self._max_cpu_usage=30
         self._frame_wait_min=0.015
         self._frame_wait_max=0.8
         self._frame_wait_step=0.005
         self._frame_wait=self._frame_wait_min
-        self._frame_wait_cnt=utils.Counter()
+        self._frame_wait_cnt=utils_core.Counter()
         self._inputs_list=[]
         self._inputs_lock=threading.Lock()
         self._privacy_mode=False
@@ -113,9 +113,9 @@ class ProcessCaptureScreen(threading.Thread):
                     else:
                         raise Exception("Library " + nm + " not load.")
                 except:
-                    ex = utils.get_exception()
+                    ex = utils_core.get_exception()
                     lastex=ex
-                    self._process._debug_print(utils.exception_to_string(ex))
+                    self._process._debug_print(utils_core.exception_to_string(ex))
                     self._unload_screen_module()
             if lastex is not None:                
                 raise lastex
@@ -182,7 +182,7 @@ class ProcessCaptureScreen(threading.Thread):
                     bcommand=False
                     if len(prms)==7:
                         bcommand=(prms[6]=="true")
-                    self._screen_module.DWAScreenCaptureInputKeyboard(utils.str_to_bytes(prms[1]), utils.str_to_bytes(prms[2]), prms[3]=="true", prms[4]=="true", prms[5]=="true", bcommand)
+                    self._screen_module.DWAScreenCaptureInputKeyboard(utils_core.str_to_bytes(prms[1]), utils_core.str_to_bytes(prms[2]), prms[3]=="true", prms[4]=="true", prms[5]=="true", bcommand)
                 elif prms[0]==u"COPY":
                     apps = None
                     self._screen_module.DWAScreenCaptureCopy()
@@ -196,15 +196,15 @@ class ProcessCaptureScreen(threading.Thread):
                     self._process._stream.write_obj({u"request": u"COPY_TEXT", u"text":apps})
                 elif prms[0]==u"PASTE":
                     stxt=ips[i][6:]
-                    self._screen_module.DWAScreenCaptureSetClipboardText(ctypes.c_wchar_p(utils.str_new(stxt)))
+                    self._screen_module.DWAScreenCaptureSetClipboardText(ctypes.c_wchar_p(utils_core.str_new(stxt)))
                     self._screen_module.DWAScreenCapturePaste()
                 elif prms[0]==u"SET_CLIPBOARD":
                     stxt=ips[i][14:]
                     stxt=stxt[5:] #REMOVE type (text)
-                    self._screen_module.DWAScreenCaptureSetClipboardText(ctypes.c_wchar_p(utils.str_new(stxt)))
+                    self._screen_module.DWAScreenCaptureSetClipboardText(ctypes.c_wchar_p(utils_core.str_new(stxt)))
             except:
-                ex = utils.get_exception()
-                self._process._debug_print(utils.exception_to_string(ex))
+                ex = utils_core.get_exception()
+                self._process._debug_print(utils_core.exception_to_string(ex))
         
     
     def add_inputs(self,mon,ips):
@@ -239,8 +239,8 @@ class ProcessCaptureScreen(threading.Thread):
                         memmap.close()                
                     del self._monitors_instance["memmap"]
         except:
-            ex = utils.get_exception()                    
-            self._process._debug_print(utils.exception_to_string(ex))
+            ex = utils_core.get_exception()                    
+            self._process._debug_print(utils_core.exception_to_string(ex))
     
     def _lib_init_monitors(self):
         self._capture_cnt_err=None
@@ -273,8 +273,8 @@ class ProcessCaptureScreen(threading.Thread):
                     try:                
                         self._screen_module.DWAScreenCaptureTermMonitor(mon["capses"]);
                     except:
-                        ex = utils.get_exception()                    
-                        self._process._debug_print(utils.exception_to_string(ex))
+                        ex = utils_core.get_exception()                    
+                        self._process._debug_print(utils_core.exception_to_string(ex))
                     mon["capses"]=None
     
     def _lib_get_image_monitors(self, forcechange):
@@ -315,7 +315,7 @@ class ProcessCaptureScreen(threading.Thread):
                                 else:
                                     memmap.write(b"E")
                                     if self._capture_cnt_err==None:
-                                        self._capture_cnt_err=utils.Counter()
+                                        self._capture_cnt_err=utils_core.Counter()
                                     if self._capture_cnt_err.is_elapsed(1.0):
                                         self._capture_fallback_ok=True
                                         raise Exception("Unable to capture monitor (code: " + str(iret) + ").");
@@ -366,7 +366,7 @@ class ProcessCaptureScreen(threading.Thread):
                                 memmap.seek(curpos)
                                 memmap.write(self._curimage)
                                 if self._curimage.changed==1:
-                                    cdt = utils.zlib_compress((ctypes.c_char*self._curimage.sizedata).from_address(self._curimage.data))
+                                    cdt = utils_core.zlib_compress((ctypes.c_char*self._curimage.sizedata).from_address(self._curimage.data))
                                     if len(cdt)<common.MAX_CURSOR_IMAGE_SIZE:
                                         self._curid+=1
                                         memmap.write(self._struct_Q.pack(self._curid))                                    
@@ -404,7 +404,7 @@ class ProcessCaptureScreen(threading.Thread):
                     self._capture_allowed=False
                     if first_time==True:
                         self._process._stream.write_obj({u"request": u"MONITORS_CHANGED", u"monitors":[], u"error_code":-1})
-                        detect_monitors_cnt = utils.Counter()
+                        detect_monitors_cnt = utils_core.Counter()
                     detect_monitors_cnt.reset()
                 
                 if self._capture_allowed!=cptallow:
@@ -439,7 +439,7 @@ class ProcessCaptureScreen(threading.Thread):
                             self._status="C"                            
                             if first_time==False and self._monitors_info.count==0:
                                 if detect_monitors_zero_cnt is None:
-                                    detect_monitors_zero_cnt=utils.Counter()
+                                    detect_monitors_zero_cnt=utils_core.Counter()
                                 if detect_monitors_zero_cnt.is_elapsed(6):
                                     self._send_monitors_changed()
                             else:
@@ -448,7 +448,7 @@ class ProcessCaptureScreen(threading.Thread):
                             self._capture_fallback_ok=True
                             raise Exception("Unable to detect monitors.");
                     if detect_monitors_cnt is None:
-                        detect_monitors_cnt = utils.Counter()
+                        detect_monitors_cnt = utils_core.Counter()
                     else:
                         detect_monitors_cnt.reset()
 
@@ -458,7 +458,7 @@ class ProcessCaptureScreen(threading.Thread):
                     self._status="O"
                     first_time=False
                     detect_monitors_zero_cnt=None
-                    self._capture_cnt_init=utils.Counter()                    
+                    self._capture_cnt_init=utils_core.Counter()                    
                 if self._status=="O":
                     self._lib_get_image_monitors(forceChanges)
                     self._lib_get_cursor()
@@ -469,12 +469,12 @@ class ProcessCaptureScreen(threading.Thread):
                     time.sleep(0.25)
                 
         except:
-            ex = utils.get_exception() 
-            ar={u"request": u"RAISE_ERROR", u"class":u"ProcessCaptureScreen",  u"message":utils.exception_to_string(ex)}
+            ex = utils_core.get_exception() 
+            ar={u"request": u"RAISE_ERROR", u"class":u"ProcessCaptureScreen",  u"message":utils_core.exception_to_string(ex)}
             if self._capture_fallback_ok and self._capture_fallback_lib is not None:
                 ar["capture_fallback_lib"]=self._capture_fallback_lib
             self._process._stream.write_obj(ar)                   
-            self._process._debug_print(utils.exception_to_string(ex))
+            self._process._debug_print(utils_core.exception_to_string(ex))
         
         self._close_memmap()
         if self._status=="O":
@@ -533,7 +533,7 @@ class ProcessCaptureSound(threading.Thread):
     def cb_sound_data(self, sz, pdata):
         if self._status=="O" and sz>0:
             try:
-                sdata = utils.bytes_new(pdata[0:sz])
+                sdata = utils_core.bytes_new(pdata[0:sz])
                 self._cond.acquire()
                 try:
                     self._memmap.seek(0)
@@ -560,9 +560,9 @@ class ProcessCaptureSound(threading.Thread):
                 finally:
                     self._cond.release()
             except:
-                ex = utils.get_exception()
+                ex = utils_core.get_exception()
                 self._status=b"C"
-                self._process._debug_print(str("cb_sound_data err: " + utils.exception_to_string(ex)))
+                self._process._debug_print(str("cb_sound_data err: " + utils_core.exception_to_string(ex)))
             
     
     def run(self):
@@ -577,13 +577,13 @@ class ProcessCaptureSound(threading.Thread):
                 if self._process.get_sound_enable():
                     fnsndcrash=None
                     if agent.is_linux():
-                        fnsndcrash = utils.path_expanduser("~") + utils.path_sep + u".dwagent"
-                        if not utils.path_exists(fnsndcrash):
-                            utils.path_makedirs(fnsndcrash)
-                        fnsndcrash = fnsndcrash + utils.path_sep + u"app_desktop.soundcrash"
-                    if fnsndcrash is None or not utils.path_exists(fnsndcrash):
+                        fnsndcrash = utils_core.path_expanduser("~") + utils_core.path_sep + u".dwagent"
+                        if not utils_core.path_exists(fnsndcrash):
+                            utils_core.path_makedirs(fnsndcrash)
+                        fnsndcrash = fnsndcrash + utils_core.path_sep + u"app_desktop.soundcrash"
+                    if fnsndcrash is None or not utils_core.path_exists(fnsndcrash):
                         if fnsndcrash is not None:
-                            fsndcrash=utils.file_open(fnsndcrash, 'wb')
+                            fsndcrash=utils_core.file_open(fnsndcrash, 'wb')
                             fsndcrash.close()
                         try:
                             self._load_sound_module()
@@ -596,7 +596,7 @@ class ProcessCaptureSound(threading.Thread):
                                         bf = ctypes.create_string_buffer(2048)
                                         l = self._sound_module.DWASoundCaptureGetDetectOutputName(capses,bf,2048);
                                         if l>0:
-                                            sodn=utils.bytes_to_str(bf.value[0:l],"utf8")
+                                            sodn=utils_core.bytes_to_str(bf.value[0:l],"utf8")
                                         else:
                                             sodn=""
                                         if "SOUNDFLOWER" not in sodn.upper():
@@ -609,7 +609,7 @@ class ProcessCaptureSound(threading.Thread):
                                 err_msg="Invalid library version: " + str(self._sound_libver)
                         finally:
                             if fnsndcrash is not None:
-                                if utils.path_exists(fnsndcrash):
+                                if utils_core.path_exists(fnsndcrash):
                                     os.remove(fnsndcrash)
                     else:
                         err_msg="Crash soundlib."
@@ -618,9 +618,9 @@ class ProcessCaptureSound(threading.Thread):
             else:
                 err_msg="Not supported."
         except:
-            ex = utils.get_exception()            
-            err_msg=utils.exception_to_string(ex)
-            self._process._debug_print("Sound load error. " + utils.exception_to_string(ex));
+            ex = utils_core.get_exception()            
+            err_msg=utils_core.exception_to_string(ex)
+            self._process._debug_print("Sound load error. " + utils_core.exception_to_string(ex));
         
         if err_msg is not None:
             self._process.write_obj({u"request": u"SOUND_STATUS", u"status":u"ERROR", u"message":err_msg});
@@ -644,8 +644,8 @@ class ProcessCaptureSound(threading.Thread):
             try:
                 self._memmap.close()
             except:
-                ex = utils.get_exception()               
-                self._process._debug_print(utils.exception_to_string(ex))
+                ex = utils_core.get_exception()               
+                self._process._debug_print(utils_core.exception_to_string(ex))
             self._memmap=None                 
         
         
@@ -687,7 +687,7 @@ class ProcessCapture(ipc.ChildProcessThread):
     
     def _debug_print(self,s):
         if self._dbgenable:
-            print(utils.str_new(s))
+            print(utils_core.str_new(s))
                 
     def cb_screen_debug_print(self, s):
         self._debug_print("DESKTOPNATIVE@" + s)
@@ -726,8 +726,8 @@ class ProcessCapture(ipc.ChildProcessThread):
                     sys.stdout=ProcessCaptureStdRedirect(self._logger,logging.DEBUG);
                     sys.stderr=ProcessCaptureStdRedirect(self._logger,logging.ERROR);                            
         except:
-            ex = utils.get_exception()
-            self._debug_print(utils.exception_to_string(ex));
+            ex = utils_core.get_exception()
+            self._debug_print(utils_core.exception_to_string(ex));
             return    
         
         
@@ -771,20 +771,20 @@ class ProcessCapture(ipc.ChildProcessThread):
                     else:
                         raise Exception(u"Request '" + sreq + u"' is not valid.")
                 except:
-                    ex = utils.get_exception()
-                    self._debug_print(utils.exception_to_string(ex))
+                    ex = utils_core.get_exception()
+                    self._debug_print(utils_core.exception_to_string(ex))
                     
         except:
-            ex = utils.get_exception()
+            ex = utils_core.get_exception()
             if not self.is_destroy():
-                self._debug_print(utils.exception_to_string(ex));
+                self._debug_print(utils_core.exception_to_string(ex));
         self.destroy()
         if self._stream is not None:
             try:
                 self._stream.close()
             except:
-                ex = utils.get_exception()
-                self._debug_print(utils.exception_to_string(ex))
+                ex = utils_core.get_exception()
+                self._debug_print(utils_core.exception_to_string(ex))
         
         
         #TMP PRIVACY MODE

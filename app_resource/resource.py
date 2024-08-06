@@ -16,20 +16,20 @@ import time
 import re
 import subprocess
 import stat
-import utils
+import utils_core
 
 ##### TO FIX 22/09/2021
 try:
-    TMP_bytes_to_str=utils.bytes_to_str
-    TMP_str_to_bytes=utils.str_to_bytes
+    TMP_bytes_to_str=utils_core.bytes_to_str
+    TMP_str_to_bytes=utils_core.str_to_bytes
 except:
     TMP_bytes_to_str=lambda b, enc="ascii": b.decode(enc, errors="replace")
     TMP_str_to_bytes=lambda s, enc="ascii": s.encode(enc, errors="replace")
 try:    
     import sys
     if sys.version_info[0]==2:        
-        if utils.path_exists(os.path.dirname(__file__) + os.sep + "__pycache__"):
-            utils.path_remove(os.path.dirname(__file__) + os.sep + "__pycache__")
+        if utils_core.path_exists(os.path.dirname(__file__) + os.sep + "__pycache__"):
+            utils_core.path_remove(os.path.dirname(__file__) + os.sep + "__pycache__")
 except: 
     None
 ##### TO FIX 22/09/2021
@@ -255,7 +255,7 @@ class NativeLinux:
    
     def get_system_info(self):
         hmcpu={}
-        f = utils.file_open("/proc/cpuinfo", "r", encoding="utf8", errors='replace')
+        f = utils_core.file_open("/proc/cpuinfo", "r", encoding="utf8", errors='replace')
         try:
             for line in f:
                 if line.startswith("model name"):
@@ -277,7 +277,7 @@ class NativeLinux:
     def get_diskpartition_info(self):
         arret = []
         phydevs = []
-        f = utils.file_open("/proc/filesystems", "r", encoding="utf8", errors='replace')
+        f = utils_core.file_open("/proc/filesystems", "r", encoding="utf8", errors='replace')
         try:
             for line in f:
                 if not line.startswith("nodev"):
@@ -285,7 +285,7 @@ class NativeLinux:
         finally:
             f.close()
         #Legge fstab
-        f = utils.file_open("/etc/fstab", "r", encoding="utf8", errors='replace')
+        f = utils_core.file_open("/etc/fstab", "r", encoding="utf8", errors='replace')
         try:
             for line in f:
                 line=line.strip()
@@ -318,7 +318,7 @@ class NativeLinux:
                 None
             
             if num == 0:
-                f = utils.file_open('/proc/cpuinfo', 'rb', encoding="utf8", errors='replace')
+                f = utils_core.file_open('/proc/cpuinfo', 'rb', encoding="utf8", errors='replace')
                 try:
                     lines = f.readlines()
                 finally:
@@ -327,7 +327,7 @@ class NativeLinux:
                     if line.lower().startswith('processor'):
                         num += 1
             if num == 0:
-                f = utils.file_open('/proc/stat', 'rb', encoding="utf8", errors='replace')
+                f = utils_core.file_open('/proc/stat', 'rb', encoding="utf8", errors='replace')
                 try:
                     lines = f.readlines()
                 finally:
@@ -345,7 +345,7 @@ class NativeLinux:
         ret  = {}
         cpuUsagePerc=0
         #Legge info cpu
-        f = utils.file_open('/proc/stat', 'rb', encoding="utf8", errors='replace')
+        f = utils_core.file_open('/proc/stat', 'rb', encoding="utf8", errors='replace')
         try:
             arline = f.readline().split()
         finally:
@@ -373,7 +373,7 @@ class NativeLinux:
         ret["cpuUsagePerc"]=cpuUsagePerc
         
         #Legge la memoria
-        f = utils.file_open('/proc/meminfo', 'rb', encoding="utf8", errors='replace')
+        f = utils_core.file_open('/proc/meminfo', 'rb', encoding="utf8", errors='replace')
         memoryPhysicalTotal=0
         memoryPhysicalAvailable=-1
         memoryFree=0
@@ -407,20 +407,20 @@ class NativeLinux:
     def get_task_list(self):
         import pwd
         ret = []
-        for x in utils.path_list('/proc') :
+        for x in utils_core.path_list('/proc') :
             if x.isdigit():
                 try:
                     itm={}
                     #PID
                     itm["PID"]=int(x)
                     #Name
-                    f = utils.file_open("/proc/%s/stat" % x, encoding="utf8", errors='replace')
+                    f = utils_core.file_open("/proc/%s/stat" % x, encoding="utf8", errors='replace')
                     try:
                         itm["Name"] = f.read().split(' ')[1].replace('(', '').replace(')', '')
                     finally:
                         f.close()
                     #Memory
-                    f = utils.file_open("/proc/%s/statm" % x, encoding="utf8", errors='replace')
+                    f = utils_core.file_open("/proc/%s/statm" % x, encoding="utf8", errors='replace')
                     try:
                         vms, rss = f.readline().split()[:2]
                         itm["Memory"] = int(rss) * int(self._PAGESIZE)
@@ -428,7 +428,7 @@ class NativeLinux:
                     finally:
                         f.close()
                     #Owner
-                    f = utils.file_open("/proc/%s/status" % x, encoding="utf8", errors='replace')
+                    f = utils_core.file_open("/proc/%s/status" % x, encoding="utf8", errors='replace')
                     try:
                         for line in f:
                             if line.startswith('Uid:'):
@@ -489,12 +489,12 @@ class NativeLinux:
                         ret.append({"Name":sv,"Label":"","Status":st})
         else:
             #SYSVINIT
-            for x in utils.path_list('/etc/init.d'):
+            for x in utils_core.path_list('/etc/init.d'):
                 if x.lower()!="rc" and x.lower()!="rcs" and x.lower()!="halt" and x.lower()!="reboot" and x.lower()!="single":
                     xp = "/etc/init.d/" + x
-                    st = utils.path_stat(xp)
+                    st = utils_core.path_stat(xp)
                     if bool(st.st_mode & stat.S_IXUSR) or bool(st.st_mode & stat.S_IXGRP) or bool(st.st_mode & stat.S_IXOTH):                        
-                        appf = utils.file_open("/etc/init.d/" + x, encoding="utf8", errors='replace')
+                        appf = utils_core.file_open("/etc/init.d/" + x, encoding="utf8", errors='replace')
                         apps = appf.read()
                         appf.close()                        
                         if "status)" in apps or "status|" in apps:  
@@ -713,7 +713,7 @@ class NativeMac:
         import xml.etree.ElementTree as ET
         ret={}
         path='/System/Library/LaunchDaemons'
-        for x in utils.path_list(path):
+        for x in utils_core.path_list(path):
             try:
                 bok=False
                 tree = ET.parse(path + "/" + x)

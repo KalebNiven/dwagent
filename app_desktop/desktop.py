@@ -13,7 +13,7 @@ import time
 import struct
 import os
 import stat
-import utils
+import utils_core
 import ctypes
 import native
 import subprocess
@@ -59,7 +59,7 @@ class Desktop():
                 try:
                     dm.destroy()
                 except:
-                    e = utils.get_exception()
+                    e = utils_core.get_exception()
                     self._agent_main.write_except(e,"AppDesktop:: on_conn_close error:")
             
     def has_permission(self,cinfo):
@@ -224,7 +224,7 @@ class DesktopProcessCapture(threading.Thread):
             self._screen_module=None;
     
     def _is_old_windows(self):
-        return (utils.is_windows() and (native.get_instance().is_win_xp()==1 or native.get_instance().is_win_2003_server()==1))
+        return (utils_core.is_windows() and (native.get_instance().is_win_xp()==1 or native.get_instance().is_win_2003_server()==1))
             
     def _init_sound_module(self):
         if not self._is_old_windows():
@@ -238,8 +238,8 @@ class DesktopProcessCapture(threading.Thread):
                     if soundenable:
                         self._sound_module = self._agent_main.load_lib("soundcapture")
                 except:
-                    e = utils.get_exception()
-                    self._agent_main.write_err("Sound library load error: " + utils.exception_to_string(e))
+                    e = utils_core.get_exception()
+                    self._agent_main.write_err("Sound library load error: " + utils_core.exception_to_string(e))
         return self._sound_module
     
     def _term_sound_module(self):
@@ -288,7 +288,7 @@ class DesktopProcessCapture(threading.Thread):
             if self._strm!=None:
                 self._strm.close()                
         except:
-            e = utils.get_exception()            
+            e = utils_core.get_exception()            
             self._agent_main.write_except(e)        
         self._strm=None
         if self._process is not None: 
@@ -406,8 +406,8 @@ class DesktopProcessCapture(threading.Thread):
                     else:
                         time.sleep(1)
                 except:
-                    e = utils.get_exception()
-                    strmsg=utils.exception_to_string(e)                    
+                    e = utils_core.get_exception()
+                    strmsg=utils_core.exception_to_string(e)                    
                     self._process_last_error=strmsg
                     if strmsg=="XWayland is not supported.":
                         self.destroy()                    
@@ -417,8 +417,8 @@ class DesktopProcessCapture(threading.Thread):
                     time.sleep(1)
         except:
             try:
-                e = utils.get_exception()
-                self._process_last_error=utils.exception_to_string(e)
+                e = utils_core.get_exception()
+                self._process_last_error=utils_core.exception_to_string(e)
             except:
                 self._process_last_error="Process not started."
         self.destroy()
@@ -434,7 +434,7 @@ class DesktopProcessCapture(threading.Thread):
         
     def inputs(self, mon, sinps):
         bok = True
-        if utils.is_windows() and "CTRLALTCANC" in sinps:
+        if utils_core.is_windows() and "CTRLALTCANC" in sinps:
             if self._screen_module.DWAScreenCaptureSAS():
                 bok = False            
         if bok: 
@@ -501,7 +501,7 @@ class DesktopSession(threading.Thread):
         self._frame_intervall_fps_min=5.0
         self._frame_intervall_fps=self._frame_intervall_fps_min
         self._frame_intervall_wait=1.0/self._frame_intervall_fps        
-        self._frame_intervall_time_counter=utils.Counter()                
+        self._frame_intervall_time_counter=utils_core.Counter()                
         self._frame_distance=0
         self._audio_type=-1
         self._audio_type_to_send=False
@@ -538,7 +538,7 @@ class DesktopSession(threading.Thread):
         self._process_encoder_monitorsid=-1
         self._process_encoder_init=False                        
         self._init_session_to_send=True
-        self._init_counter=utils.Counter()
+        self._init_counter=utils_core.Counter()
         self._init_err_msg=None
         self._debug_forcesubprocess=False
         try:
@@ -608,7 +608,7 @@ class DesktopSession(threading.Thread):
                     self._quality_request=int(prprequest["quality"])
                 if prprequest is not None and "keepalive" in prprequest:
                     if self._keepalive_counter is None:
-                        self._keepalive_counter = utils.Counter()
+                        self._keepalive_counter = utils_core.Counter()
                     self._keepalive_send = True
                 if prprequest is not None and "audioEnable" in prprequest:
                     self._audio_enable=prprequest["audioEnable"]=="true"
@@ -616,9 +616,9 @@ class DesktopSession(threading.Thread):
                     b=prprequest["sendStats"]=="true"                    
                     self._send_stats=b
             except:
-                ex = utils.get_exception()
+                ex = utils_core.get_exception()
                 if self._process.get_status()=="started":
-                    self._dskmain._agent_main.write_err("AppDesktop:: on_websoket_data error. ID: " + self._id + " - Error:" + utils.exception_to_string(ex))            
+                    self._dskmain._agent_main.write_err("AppDesktop:: on_websoket_data error. ID: " + self._id + " - Error:" + utils_core.exception_to_string(ex))            
             
    
     def _on_websocket_close(self):
@@ -681,14 +681,14 @@ class DesktopSession(threading.Thread):
         self._stats_sent_bytes+=self._stats_sent_size.pop(0)
         
         if self._stats_counter is None: #FIRST FRAME
-            self._stats_counter=utils.Counter()
-            self._slow_mode_counter=utils.Counter()
+            self._stats_counter=utils_core.Counter()
+            self._slow_mode_counter=utils_core.Counter()
         
         #self.calc_stats()    
             
     def send_init_session(self):
         #SEND ID        
-        sdataid=self._struct_h.pack(common.TOKEN_SESSION_ID)+utils.str_to_bytes(self._id)
+        sdataid=self._struct_h.pack(common.TOKEN_SESSION_ID)+utils_core.str_to_bytes(self._id)
         self._send_bytes(sdataid)
     
         #START KEEP ALIVE MANAGER
@@ -700,7 +700,7 @@ class DesktopSession(threading.Thread):
         spar.append(self._struct_hh.pack(common.TOKEN_SUPPORTED_FRAME,3))
         for sf in self._supported_frame:
             spar.append(self._struct_h.pack(sf))
-        self._send_bytes(utils.bytes_join(spar))
+        self._send_bytes(utils_core.bytes_join(spar))
     
     
     def calc_stats(self):
@@ -764,19 +764,19 @@ class DesktopSession(threading.Thread):
                     ba[0:0]=self._struct_h.pack(common.TOKEN_SESSION_STATS)
                     self._send_bytes(ba)
                 except:
-                    print(utils.get_exception())
+                    print(utils_core.get_exception())
         
     
     def detect_qa(self):
         if self._quality_request==-1 and self._slow_mode is False: #DA SISTEMARE
             if self._quality_detect_counter is None:
-                self._quality_detect_counter=utils.Counter()
+                self._quality_detect_counter=utils_core.Counter()
             if self._quality_detect_counter.is_elapsed(1):                
                 self._quality_detect_wait-=(self._ping/2.0)
                 if self._quality_detect_wait<0:
                     self._quality_detect_wait=0                
                 perc = self._quality_detect_wait/self._quality_detect_counter.get_value()
-                #print(utils.str_new(perc)
+                #print(utils_core.str_new(perc)
                 if perc>=0.7:
                     if self._quality_detect_value>0:
                         self._quality_detect_value-=1
@@ -856,11 +856,11 @@ class DesktopSession(threading.Thread):
                     #CALCULATE PING
                     if self._ping_counter is None or (self._ping_counter.is_elapsed(5) and sum(self._stats_sent_size)==0 and self._frame_distance==0):
                         if self._ping_counter is None:
-                            self._ping_counter = utils.Counter()
+                            self._ping_counter = utils_core.Counter()
                         else:
                             self._ping_counter.reset()
                         self._ping_sent=True
-                        lst.append(self._struct_h.pack(common.TOKEN_FRAME_TIME)+utils.str_to_bytes(utils.str_new(time.time())))
+                        lst.append(self._struct_h.pack(common.TOKEN_FRAME_TIME)+utils_core.str_to_bytes(utils_core.str_new(time.time())))
                         lst.append(self._struct_hb.pack(2,1))
                         self._send_list_bytes(lst)
                         lst=[]
@@ -874,7 +874,7 @@ class DesktopSession(threading.Thread):
                             self._stats_sent_size.append(int(len(sdata)))
                         else:
                             self._stats_sent_size[p]+=int(len(sdata))
-                        if utils.bytes_get(sdata,2)==1:
+                        if utils_core.bytes_get(sdata,2)==1:
                             self._frame_distance+=1
                             if self._stats_sent_size[p]==3:
                                 self._stats_sent_size[p]=0
@@ -885,10 +885,10 @@ class DesktopSession(threading.Thread):
                     finally:
                         self._semaphore_st.release()                    
                     if bsend:                    
-                        if utils.bytes_get(sdata,2)==1:
-                            lst.append(self._struct_h.pack(common.TOKEN_FRAME_TIME)+utils.str_to_bytes(utils.str_new(time.time())))
+                        if utils_core.bytes_get(sdata,2)==1:
+                            lst.append(self._struct_h.pack(common.TOKEN_FRAME_TIME)+utils_core.str_to_bytes(utils_core.str_new(time.time())))
                         lst.append(sdata)
-                        #print("frame sent. Time: " + utils.str_new(tm))
+                        #print("frame sent. Time: " + utils_core.str_new(tm))
                 elif tp==common.TOKEN_CURSOR:
                     if self._cursor_visible==True:
                         lst.append(sdata)
@@ -925,7 +925,7 @@ class DesktopSession(threading.Thread):
                     self._process_encoder = ipc.Process("app_desktop.encoder", "ProcessEncoder", forcesubprocess=self._debug_forcesubprocess)
                     self._process_encoder_stream = self._process_encoder.start()
                     self._process_encoder_stream.set_read_timeout_function(self._strm_process_encoder_read_timeout)
-                    self._process_encoder_read_thread=threading.Thread(target=self._process_encoder_read, name="DesktopSessionProcessRead" + utils.str_new(self._id))
+                    self._process_encoder_read_thread=threading.Thread(target=self._process_encoder_read, name="DesktopSessionProcessRead" + utils_core.str_new(self._id))
                     self._process_encoder_read_thread.start()
                                         
                 if self._process.get_status()=="started":                    
@@ -1010,13 +1010,13 @@ class DesktopSession(threading.Thread):
                     time.sleep(0.25)
                 
         except:
-            e = utils.get_exception()
+            e = utils_core.get_exception()
             if not self.is_destroy():
                 if self._dskmain._agent_main._agent_debug_mode:
-                    self._dskmain._agent_main.write_err(utils.get_stacktrace_string())                
+                    self._dskmain._agent_main.write_err(utils_core.get_stacktrace_string())                
                 appmsg = self._process.get_last_error()
                 if appmsg is None:
-                    appmsg = utils.exception_to_string(e)
+                    appmsg = utils_core.exception_to_string(e)
                 self._dskmain._agent_main.write_err("AppDesktop:: session id: " + self._id + " error: "  + appmsg)                
         
         try:
@@ -1049,7 +1049,7 @@ class DesktopSession(threading.Thread):
         if not self._allow_inputs:
             raise Exception("Permission denied (inputs).")
         self._process.copy_text(self._monitor)
-        cnt = utils.Counter()
+        cnt = utils_core.Counter()
         while True:
             apps = self._process.get_last_copy_text()
             if apps is not None:

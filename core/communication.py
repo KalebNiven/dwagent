@@ -14,7 +14,7 @@ import threading
 import xml.etree.ElementTree
 import os
 import math
-import utils
+import utils_core
 import json
 
 BUFFER_SIZE_MAX = 65536-10
@@ -35,16 +35,16 @@ _proxy_detected["check"] = False
 _proxy_detected["info"] = None
 
 def is_windows():
-    return utils.is_windows()
+    return utils_core.is_windows()
 
 def is_linux():
-    return utils.is_linux()
+    return utils_core.is_linux()
 
 def is_mac():
-    return utils.is_mac()
+    return utils_core.is_mac()
 
 def get_time():
-    return utils.get_time()
+    return utils_core.get_time()
 
 def get_ssl_info():
     sslret=ssl.OPENSSL_VERSION + " ("
@@ -80,10 +80,10 @@ def _connect_proxy_http(sock, host, port, proxy_info):
     arreq=[]
     arreq.append("CONNECT %s:%d HTTP/1.0" % (host, port))
     if usr is not None and len(usr)>0:
-        auth=utils.bytes_to_str(utils.enc_base64_encode(utils.str_to_bytes(usr + ":" + pwd,"utf8")))
+        auth=utils_core.bytes_to_str(utils_core.enc_base64_encode(utils_core.str_to_bytes(usr + ":" + pwd,"utf8")))
         arreq.append("\r\nProxy-Authorization: Basic %s" % (auth))
     arreq.append("\r\n\r\n")
-    sock.sendall(utils.str_to_bytes("".join(arreq)))
+    sock.sendall(utils_core.str_to_bytes("".join(arreq)))
     resp = Response(sock)
     if resp.get_code() != '200':
         raise Exception("Proxy http error: " + str(resp.get_code()) + ".")
@@ -95,10 +95,10 @@ def _connect_proxy_socks(sock, host, port, proxy_info):
     if proxy_info.get_type()=='SOCKS5':
         arreq = []
         arreq.append(struct.pack(">BBBB", 0x05, 0x02, 0x00, 0x02))
-        sock.sendall(utils.bytes_join(arreq))
+        sock.sendall(utils_core.bytes_join(arreq))
         resp = sock.recv(2)
-        ver = utils.bytes_get(resp,0)
-        mth = utils.bytes_get(resp,1)
+        ver = utils_core.bytes_get(resp,0)
+        mth = utils_core.bytes_get(resp,1)
         if ver!=0x05:
             raise Exception("Proxy socks error: Incorrect version.")
         if mth!=0x00 and mth!=0x02:
@@ -113,10 +113,10 @@ def _connect_proxy_socks(sock, host, port, proxy_info):
                 arreq.append(struct.pack(">B", len(pwd)))
                 for c in pwd:
                     arreq.append(struct.pack(">B", ord(c)))                
-                sock.sendall(utils.bytes_join(arreq))
+                sock.sendall(utils_core.bytes_join(arreq))
                 resp = sock.recv(2)
-                ver = utils.bytes_get(resp,0)
-                status = utils.bytes_get(resp,1)
+                ver = utils_core.bytes_get(resp,0)
+                status = utils_core.bytes_get(resp,1)
                 if ver!=0x01 or status != 0x00:
                     raise Exception("Proxy socks error: Incorrect Authentication.")
             else:
@@ -133,10 +133,10 @@ def _connect_proxy_socks(sock, host, port, proxy_info):
             for c in host:
                 arreq.append(struct.pack(">B", ord(c)))
         arreq.append(struct.pack(">H", port))
-        sock.sendall(utils.bytes_join(arreq))
+        sock.sendall(utils_core.bytes_join(arreq))
         resp = sock.recv(1024)
-        ver = utils.bytes_get(resp,0)
-        status = utils.bytes_get(resp,1)
+        ver = utils_core.bytes_get(resp,0)
+        status = utils_core.bytes_get(resp,1)
         if ver!=0x05 or status != 0x00:
             raise Exception("Proxy socks error.")
     else:
@@ -161,14 +161,14 @@ def _connect_proxy_socks(sock, host, port, proxy_info):
             for c in host:
                 arreq.append(struct.pack(">B", ord(c)))
             arreq.append(b"\x00")
-        sock.sendall(utils.bytes_join(arreq))
+        sock.sendall(utils_core.bytes_join(arreq))
         
         resp = sock.recv(8)
         if len(resp)<2:
             raise Exception("Proxy socks error.")
-        if utils.bytes_get(resp,0) != 0x00:
+        if utils_core.bytes_get(resp,0) != 0x00:
             raise Exception("Proxy socks error.")
-        status = utils.bytes_get(resp,1)
+        status = utils_core.bytes_get(resp,1)
         if status != 0x5A:
             raise Exception("Proxy socks error.")
 
@@ -338,13 +338,13 @@ def _connect_socket(host, port, proxy_info, timeout=_SOCKET_TIMEOUT_READ):
                 sock.connect((prxi.get_host(), prxi.get_port()))
                 func_prx=_connect_proxy_http
             except:
-                conn_ex=utils.get_exception()
+                conn_ex=utils_core.get_exception()
         elif prxi.get_type()=='SOCKS4' or prxi.get_type()=='SOCKS4A' or prxi.get_type()=='SOCKS5':
             try:
                 sock.connect((prxi.get_host(), prxi.get_port()))
                 func_prx=_connect_proxy_socks
             except:
-                conn_ex=utils.get_exception()
+                conn_ex=utils_core.get_exception()
         else:
             sock.connect((host, port))
         
@@ -352,7 +352,7 @@ def _connect_socket(host, port, proxy_info, timeout=_SOCKET_TIMEOUT_READ):
             try:
                 func_prx(sock, host, port, prxi)
             except:
-                conn_ex=utils.get_exception()
+                conn_ex=utils_core.get_exception()
         
         if conn_ex is not None:
             if bprxdet:
@@ -397,7 +397,7 @@ def _connect_socket(host, port, proxy_info, timeout=_SOCKET_TIMEOUT_READ):
                         sock = ssl.wrap_socket(sock, ssl_version=_get_ssl_ver())
                 break
             except:
-                conn_ex=utils.get_exception()
+                conn_ex=utils_core.get_exception()
                 if bprxdet:
                     if "CERTIFICATE_VERIFY_FAILED" in str(conn_ex):
                         try: 
@@ -418,7 +418,7 @@ def _connect_socket(host, port, proxy_info, timeout=_SOCKET_TIMEOUT_READ):
             
             
     except:
-        e=utils.get_exception()
+        e=utils_core.get_exception()
         sock.close()
         raise e
     return sock
@@ -431,12 +431,12 @@ def prop_to_xml(prp):
         child = xml.etree.ElementTree.SubElement(root_element, "entry")
         child.attrib['key'] = key
         child.text = prp[key]
-    ardata.append(utils.bytes_to_str(xml.etree.ElementTree.tostring(root_element)));
+    ardata.append(utils_core.bytes_to_str(xml.etree.ElementTree.tostring(root_element)));
     return ''.join(ardata)
 
 def xml_to_prop(s):
     prp = {}
-    root = xml.etree.ElementTree.fromstring(utils.buffer_new(s,0,len(s)))
+    root = xml.etree.ElementTree.fromstring(utils_core.buffer_new(s,0,len(s)))
     for child in root:
         prp[child.attrib['key']] = child.text
     return prp
@@ -465,11 +465,11 @@ def download_url_file(urlsrc, fdest, proxy_info=None, response_transfer_progress
         sock.sendall(req.to_message())
     
         #Legge risposta
-        if utils.path_exists(fdest):
-            utils.path_remove(fdest)
+        if utils_core.path_exists(fdest):
+            utils_core.path_remove(fdest)
         ftmp = fdest + "TMP"
-        if utils.path_exists(ftmp):
-            utils.path_remove(ftmp)        
+        if utils_core.path_exists(ftmp):
+            utils_core.path_remove(ftmp)        
         resp = Response(sock, ftmp, response_transfer_progress)
         if resp.get_code() == '301':
             sredurl=resp.get_headers()["Location"]
@@ -481,8 +481,8 @@ def download_url_file(urlsrc, fdest, proxy_info=None, response_transfer_progress
     if sredurl is not None:
         download_url_file(sredurl, fdest, proxy_info, response_transfer_progress)
     else:
-        if utils.path_exists(ftmp):
-            utils.path_move(ftmp, fdest)
+        if utils_core.path_exists(ftmp):
+            utils_core.path_move(ftmp, fdest)
 
 def get_url_prop(url, proxy_info=None):
     sredurl=None
@@ -610,7 +610,7 @@ class Request:
         arhead.append('\r\n')
         if self._body is not None:
             arhead.append(self._body)
-        return utils.str_to_bytes(''.join(arhead))
+        return utils_core.str_to_bytes(''.join(arhead))
 
 class Response_Transfer_Progress:
     
@@ -646,12 +646,12 @@ class Response_Transfer_Progress:
 class Response:
     def __init__(self, sock, body_file_name=None,  response_transfer_progress=None):
         data = bytes()
-        while utils.bytes_to_str(data).find('\r\n\r\n') == -1:
+        while utils_core.bytes_to_str(data).find('\r\n\r\n') == -1:
             app=sock.recv(1024 * 4)
             if app is None or len(app)==0:
                 raise Exception('Close connection')
             data += app 
-        ar = utils.bytes_to_str(data).split('\r\n\r\n')
+        ar = utils_core.bytes_to_str(data).split('\r\n\r\n')
         head = ar[0].split('\r\n')
         appbody = []
         appbody.append(data[len(ar[0])+4:])
@@ -673,9 +673,9 @@ class Response:
             lenbd = int(self._headers[clenkey])
             fbody=None
             try:
-                jbts=utils.bytes_join(appbody)
+                jbts=utils_core.bytes_join(appbody)
                 if body_file_name is not None:
-                    fbody=utils.file_open(body_file_name, 'wb')
+                    fbody=utils_core.file_open(body_file_name, 'wb')
                     fbody.write(jbts)
                 cnt=len(jbts)
                 if response_transfer_progress is not None:
@@ -697,9 +697,9 @@ class Response:
                 if fbody is not None:
                     fbody.close()
                 else:
-                    self._body=utils.bytes_join(appbody)
+                    self._body=utils_core.bytes_join(appbody)
         else:
-            self._extra_data=utils.bytes_join(appbody)
+            self._extra_data=utils_core.bytes_join(appbody)
             if len(self._extra_data)==0:
                 self._extra_data=None
 
@@ -731,7 +731,7 @@ class Worker(threading.Thread):
                 try: 
                     func(*args, **kargs)
                 except: 
-                    e=utils.get_exception()
+                    e=utils_core.get_exception()
                     self._parent.fire_except(e)
                 self._queue.task_done()
 
@@ -741,7 +741,7 @@ class ThreadPool():
             self._destroy=False
             self._name=name
             self._fexcpt=fexcpt
-            self._queue = utils.Queue(queue_size)
+            self._queue = utils_core.Queue(queue_size)
             for i in range(core_size):
                 self._worker = Worker(self, self._queue, i)
                 self._worker.start()
@@ -967,7 +967,7 @@ class ConnectionCheckAlive(threading.Thread):
         threading.Thread.__init__(self, name="ConnectionCheckAlive")
         self.daemon=True
         self._connection=conn
-        self._counter=utils.Counter()
+        self._counter=utils_core.Counter()
         self._connection_keepalive_send=False
         self._semaphore = threading.Condition()
 
@@ -1034,7 +1034,7 @@ class ConnectionReader(threading.Thread):
             self._connection._tdalive.reset();
             data.append(s)
             cnt+=len(s)
-        return utils.bytes_join(data)
+        return utils_core.bytes_join(data)
         
     
     def run(self):
@@ -1050,12 +1050,12 @@ class ConnectionReader(threading.Thread):
                     break
                 else:
                     lendt=0;
-                    bt1=utils.bytes_get(data,1);
+                    bt1=utils_core.bytes_get(data,1);
                     if bt1 <= 125:
                         if bt1 > 0:
                             lendt = bt1;
                         else:
-                            bt0=utils.bytes_get(data,0);
+                            bt0=utils_core.bytes_get(data,0);
                             if bt0 == 136: #CLOSE  
                                 bconnLost=False                              
                                 bfireclose=not self._connection.is_close()
@@ -1091,7 +1091,7 @@ class ConnectionReader(threading.Thread):
                     self._connection.fire_data(data)
                     
         except:
-            e=utils.get_exception()
+            e=utils_core.get_exception()
             bfireclose=not self._connection.is_close()
             #traceback.print_exc()
             self._connection.fire_except(e) 
@@ -1189,7 +1189,7 @@ class Connection:
             return resp            
                             
         except:
-            e=utils.get_exception()
+            e=utils_core.get_exception()
             self.shutdown()
             raise e
     
@@ -1231,7 +1231,7 @@ class Connection:
             else: 
                 ba=bytearray(self._ws_data_struct_3.pack(self._ws_data_b0, 0xFF,length,0)) #rnd=random.randint(0,2147483647)
             ba+=dt
-            utils.socket_sendall(self._sock,ba)
+            utils_core.socket_sendall(self._sock,ba)
         finally:
             self._lock_send.release()
             
@@ -1240,7 +1240,7 @@ class Connection:
             raise Exception('connection closed.')
         self._lock_send.acquire()
         try:
-            utils.socket_sendall(self._sock,self._ws_close_struct.pack(self._ws_close_b0, 0x80 | 0, 0)) #rnd=random.randint(0,2147483647)
+            utils_core.socket_sendall(self._sock,self._ws_close_struct.pack(self._ws_close_b0, 0x80 | 0, 0)) #rnd=random.randint(0,2147483647)
         finally:
             self._lock_send.release() 
     
@@ -1249,7 +1249,7 @@ class Connection:
             raise Exception('connection closed.')
         self._lock_send.acquire()
         try:
-            utils.socket_sendall(self._sock,self._ws_ping_struct.pack(self._ws_ping_b0, 0x80 | 0, 0)) #rnd=random.randint(0,2147483647)
+            utils_core.socket_sendall(self._sock,self._ws_ping_struct.pack(self._ws_ping_b0, 0x80 | 0, 0)) #rnd=random.randint(0,2147483647)
         finally:
             self._lock_send.release()
 
@@ -1282,7 +1282,7 @@ class Connection:
             if bsendclose:
                 self._send_ws_close();
                 #Attende lo shutdown
-                cnt = utils.Counter()
+                cnt = utils_core.Counter()
                 while not self.is_shutdown():
                     time.sleep(0.2)
                     if cnt.is_elapsed(10):

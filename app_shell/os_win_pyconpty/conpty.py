@@ -7,15 +7,15 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 import time
 import os
-import utils
+import utils_core
 from threading import Thread
 from ctypes import *
 from .win32.native import *
 
 ##### TO FIX 22/09/2021
 try:
-    TMP_bytes_to_str=utils.bytes_to_str
-    TMP_str_to_bytes=utils.str_to_bytes
+    TMP_bytes_to_str=utils_core.bytes_to_str
+    TMP_str_to_bytes=utils_core.str_to_bytes
 except:
     TMP_bytes_to_str=lambda b, enc="ascii": b.decode(enc, errors="replace")
     TMP_str_to_bytes=lambda s, enc="ascii": s.encode(enc, errors="replace")
@@ -123,8 +123,8 @@ class ConPty(Thread):
             self._status=u"OPEN"
             WaitForSingleObject(self._lpProcessInformation.hThread, 10 * 1000)
         except Exception as e:
-            self._status=u"ERROR:" + utils.exception_to_string(e)
-            self.write_err(utils.exception_to_string(e))            
+            self._status=u"ERROR:" + utils_core.exception_to_string(e)
+            self.write_err(utils_core.exception_to_string(e))            
 
     def open(self, timeout=20):
         self.start()

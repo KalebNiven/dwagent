@@ -7,7 +7,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
 import ctypes
-import utils
+import utils_core
 import os
 import stat
 import subprocess
@@ -31,11 +31,11 @@ def get_instance():
         if "instance" in _nativemap:
             oret=_nativemap["instance"]
         else:
-            if utils.is_windows():
+            if utils_core.is_windows():
                 oret = Windows()
-            elif utils.is_linux():
+            elif utils_core.is_linux():
                 oret = Linux()
-            elif utils.is_mac():
+            elif utils_core.is_mac():
                 oret = Mac()
             oret.load_library();
             _nativemap["instance"]=oret
@@ -44,7 +44,7 @@ def get_instance():
     return oret
 
 def fmain(args):
-    if utils.is_mac():
+    if utils_core.is_mac():
         if len(args)>1:
             a1=args[1]            
             if a1 is not None and a1.lower()=="guilnc": #GUI LAUNCHER OLD VERSION 03/11/2021 (DO NOT REMOVE) (DO NOT REMOVE)
@@ -53,22 +53,22 @@ def fmain(args):
                 sys.exit(0)
 
 def get_suffix():
-    if utils.is_windows():
+    if utils_core.is_windows():
         return "win"
-    elif utils.is_linux():
+    elif utils_core.is_linux():
         return "linux"
-    elif utils.is_mac():
+    elif utils_core.is_mac():
         return "mac"
     return None
 
 def get_library_config(name):
     fn=None
-    if utils.path_exists(".srcmode"):
-        fn=".." + utils.path_sep + "lib_" + name + utils.path_sep + "config.json"        
+    if utils_core.path_exists(".srcmode"):
+        fn=".." + utils_core.path_sep + "lib_" + name + utils_core.path_sep + "config.json"        
     else:
-        fn="native" + utils.path_sep + "lib_" + name + ".json"
-    if utils.path_exists(fn):
-        f = utils.file_open(fn)
+        fn="native" + utils_core.path_sep + "lib_" + name + ".json"
+    if utils_core.path_exists(fn):
+        f = utils_core.file_open(fn)
         jsapp = json.loads(f.read())
         f.close()
         return jsapp
@@ -96,22 +96,22 @@ def unload_libraries(lstlibs):
 
 def _load_lib_obj(name):
     retlib = None
-    if utils.is_windows():
-        if not utils.path_exists(".srcmode"):
+    if utils_core.is_windows():
+        if not utils_core.path_exists(".srcmode"):
             retlib = ctypes.CDLL("native\\" + name)
         else:
             retlib = ctypes.CDLL("..\\make\\native\\" + name)
         if retlib is None:
             raise Exception("Missing library " + name + ".")
-    elif utils.is_linux():
-        if not utils.path_exists(".srcmode"):
+    elif utils_core.is_linux():
+        if not utils_core.path_exists(".srcmode"):
             retlib  = ctypes.CDLL("native/" + name, ctypes.RTLD_GLOBAL)
         else: 
             retlib = ctypes.CDLL("../make/native/" + name, ctypes.RTLD_GLOBAL)
         if retlib is None:
             raise Exception("Missing library " + name + ".")
-    elif utils.is_mac():
-        if not utils.path_exists(".srcmode"):
+    elif utils_core.is_mac():
+        if not utils_core.path_exists(".srcmode"):
             retlib  = ctypes.CDLL("native/" + name, ctypes.RTLD_GLOBAL)
         else: 
             retlib = ctypes.CDLL("../make/native/" + name, ctypes.RTLD_GLOBAL)
@@ -123,15 +123,15 @@ def _load_lib_obj(name):
 def _unload_lib_obj(olib):
     if olib is not None:
         try:
-            if utils.is_windows():
+            if utils_core.is_windows():
                 import _ctypes
                 _ctypes.FreeLibrary(olib._handle)
                 del olib
-            elif utils.is_linux():
+            elif utils_core.is_linux():
                 import _ctypes
                 _ctypes.dlclose(olib._handle)
                 del olib
-            elif utils.is_mac():
+            elif utils_core.is_mac():
                 import _ctypes
                 _ctypes.dlclose(olib._handle)
                 del olib
@@ -146,7 +146,7 @@ while isLoaded('./mylib.so'):
 It's so unclean that I only checked it works using:
 
 def isLoaded(lib):
-   libp = utils.path_absname(lib)
+   libp = utils_core.path_absname(lib)
    ret = os.system("lsof -p %d | grep %s > /dev/null" % (os.getpid(), libp))
    return (ret == 0)
 
@@ -180,7 +180,7 @@ class Windows():
         return bret==1
     
     def set_file_permission_everyone(self,fl):
-        if utils.is_py2():
+        if utils_core.is_py2():
             self._dwaglib.setFilePermissionEveryone(fl)
         else:
             self._dwaglib.setFilePermissionEveryone(fl.encode('utf-8'))
@@ -255,43 +255,43 @@ class Linux():
         return True
     
     def set_file_permission_everyone(self,f):
-        utils.path_change_permissions(f, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
+        utils_core.path_change_permissions(f, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
     
         
     def fix_file_permissions(self,operation,path,path_template=None):
         apppath=path
-        if apppath.endswith(utils.path_sep):
+        if apppath.endswith(utils_core.path_sep):
             apppath=apppath[0:len(apppath)-1]
         apppath_template=path_template
         if apppath_template is not None:
-            if apppath_template.endswith(utils.path_sep):
+            if apppath_template.endswith(utils_core.path_sep):
                 apppath_template=apppath_template[0:len(apppath_template)-1]
         
         if operation=="CREATE_DIRECTORY":
-            apppath_template=utils.path_dirname(path)    
-            stat_info = utils.path_stat(apppath_template)
+            apppath_template=utils_core.path_dirname(path)    
+            stat_info = utils_core.path_stat(apppath_template)
             mode = stat.S_IMODE(stat_info.st_mode)
-            utils.path_change_permissions(path,mode)
-            utils.path_change_owner(path, stat_info.st_uid, stat_info.st_gid)
+            utils_core.path_change_permissions(path,mode)
+            utils_core.path_change_owner(path, stat_info.st_uid, stat_info.st_gid)
         elif operation=="CREATE_FILE":
-            apppath_template=utils.path_dirname(path)    
-            stat_info = utils.path_stat(apppath_template)
+            apppath_template=utils_core.path_dirname(path)    
+            stat_info = utils_core.path_stat(apppath_template)
             mode = stat.S_IMODE(stat_info.st_mode)
-            utils.path_change_permissions(path, ((mode & ~stat.S_IXUSR) & ~stat.S_IXGRP) & ~stat.S_IXOTH)
-            utils.path_change_owner(path, stat_info.st_uid, stat_info.st_gid)
+            utils_core.path_change_permissions(path, ((mode & ~stat.S_IXUSR) & ~stat.S_IXGRP) & ~stat.S_IXOTH)
+            utils_core.path_change_owner(path, stat_info.st_uid, stat_info.st_gid)
         elif operation=="COPY_DIRECTORY" or operation=="COPY_FILE":
             if apppath_template is not None:
-                stat_info = utils.path_stat(apppath_template)
+                stat_info = utils_core.path_stat(apppath_template)
                 mode = stat.S_IMODE(stat_info.st_mode)
-                utils.path_change_permissions(path,mode)
-                stat_info = utils.path_stat(utils.path_dirname(path)) #PRENDE IL GRUPPO E L'UTENTE DELLA CARTELLA PADRE 
-                utils.path_change_owner(path, stat_info.st_uid, stat_info.st_gid)
+                utils_core.path_change_permissions(path,mode)
+                stat_info = utils_core.path_stat(utils_core.path_dirname(path)) #PRENDE IL GRUPPO E L'UTENTE DELLA CARTELLA PADRE 
+                utils_core.path_change_owner(path, stat_info.st_uid, stat_info.st_gid)
         elif operation=="MOVE_DIRECTORY" or operation=="MOVE_FILE":
             if apppath_template is not None:
-                stat_info = utils.path_stat(apppath_template)
+                stat_info = utils_core.path_stat(apppath_template)
                 mode = stat.S_IMODE(stat_info.st_mode)
-                utils.path_change_permissions(path,mode)
-                utils.path_change_owner(path, stat_info.st_uid, stat_info.st_gid)
+                utils_core.path_change_permissions(path,mode)
+                utils_core.path_change_owner(path, stat_info.st_uid, stat_info.st_gid)
         
     def is_gui(self):
         try:
@@ -318,7 +318,7 @@ class Linux():
             if os.path.exists(fn):
                 f = open(fn, "rb")
                 try:
-                    s = utils.bytes_to_str(f.read(),"utf8")    
+                    s = utils_core.bytes_to_str(f.read(),"utf8")    
                     if s is not None and len(s)>0:
                         s=s.strip("\n").strip("\r")
                         appar = s.split(" ")
@@ -334,7 +334,7 @@ class Linux():
                 if os.path.exists(fn):
                     f = open(fn , "rb")
                     try:
-                        s = utils.bytes_to_str(f.read(),"utf8")
+                        s = utils_core.bytes_to_str(f.read(),"utf8")
                         if s is not None and len(s)>0:
                             s=s.strip("\n").strip("\r")
                             scons = s.split(" ")[0]                        
@@ -347,7 +347,7 @@ class Linux():
                 data = subprocess.Popen(["fgconsole"], stdout = subprocess.PIPE, stderr = subprocess.PIPE)
                 so, se = data.communicate()
                 if so is not None and len(so)>0:
-                    so=utils.bytes_to_str(so, "utf8")
+                    so=utils_core.bytes_to_str(so, "utf8")
                     scons="tty"+so.replace("\n","").replace("\r","")
                     if not os.path.exists("/sys/class/tty/" + scons):
                         scons=None                    
@@ -372,7 +372,7 @@ class Linux():
             if os.path.exists(fn):
                 f = open(fn , "rb")
                 try:
-                    s = utils.bytes_to_str(f.read(),"utf8")    
+                    s = utils_core.bytes_to_str(f.read(),"utf8")    
                     if s is not None and len(s)>0:
                         arenv = s.split("\0")
                         for apps in arenv:
@@ -392,7 +392,7 @@ class Linux():
             if os.path.exists(fn):
                 f = open(fn , "rb")
                 try:
-                    s = utils.bytes_to_str(f.read(),"utf8")
+                    s = utils_core.bytes_to_str(f.read(),"utf8")
                     if s is not None and len(s)>0:
                         rpar = s.rfind(r')')
                         name = s[s.find(r'(') + 1:rpar]
@@ -417,7 +417,7 @@ class Linux():
             if os.path.exists(fn):
                 f = open(fn , "rb")
                 try:
-                    s = utils.bytes_to_str(f.read(),"utf8")
+                    s = utils_core.bytes_to_str(f.read(),"utf8")
                     if s is not None and len(s)>0:
                         import re
                         reuids=re.compile(r'Uid:\t(\d+)\t(\d+)\t(\d+)')
@@ -436,7 +436,7 @@ class Linux():
             if os.path.exists(fn):
                 f = open(fn , "rb")
                 try:
-                    s = utils.bytes_to_str(f.read(),"utf8")
+                    s = utils_core.bytes_to_str(f.read(),"utf8")
                     if s is not None and len(s)>0:
                         import re
                         reuids=re.compile(r'Gid:\t(\d+)\t(\d+)\t(\d+)')
@@ -456,7 +456,7 @@ class Linux():
             if os.path.exists(fn):
                 f = open(fn , "rb")
                 try:
-                    s = utils.bytes_to_str(f.read(),"utf8")
+                    s = utils_core.bytes_to_str(f.read(),"utf8")
                     if s is not None and len(s)>0:
                         lret = s.split("\0")             
                 finally:
@@ -472,7 +472,7 @@ class Linux():
             (po, pe) = p.communicate()
             p.wait()
             if len(po) > 0:                
-                po = utils.bytes_to_str(po, "utf8")                
+                po = utils_core.bytes_to_str(po, "utf8")                
                 ar = po.split("\n")[0].split("=")[1].split(".")
                 if ar[1].upper()=="UTF8" or ar[1].upper()=="UTF-8":
                     if ar[0].upper()=="C":
@@ -486,7 +486,7 @@ class Linux():
             (po, pe) = p.communicate()
             p.wait()
             if len(po) > 0:
-                po = utils.bytes_to_str(po, "utf8")
+                po = utils_core.bytes_to_str(po, "utf8")
                 arlines = po.split("\n")
                 for r in arlines:
                     ar = r.split(".")
@@ -519,8 +519,8 @@ class Mac():
             if self._dwaglib is None:
                 lbn="dwaglib.dylib"
                 #COMPATIBILITY BEFORE 14/11/2019
-                if not utils.path_exists(".srcmode"):
-                    if not utils.path_exists("native/"+lbn):
+                if not utils_core.path_exists(".srcmode"):
+                    if not utils_core.path_exists("native/"+lbn):
                         lbn="dwaglib.so"
                 #COMPATIBILITY BEFORE 14/11/2019
                 self._dwaglib = _load_lib_obj(lbn)
@@ -549,33 +549,33 @@ class Mac():
         return True
     
     def set_file_permission_everyone(self,f):
-        utils.path_change_permissions(f, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
+        utils_core.path_change_permissions(f, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
     
     def fix_file_permissions(self,operation,path,path_src=None):
         apppath=path
-        if apppath.endswith(utils.path_sep):
+        if apppath.endswith(utils_core.path_sep):
             apppath=apppath[0:len(apppath)-1]
         apppath_src=path_src
         if apppath_src is not None:
-            if apppath_src.endswith(utils.path_sep):
+            if apppath_src.endswith(utils_core.path_sep):
                 apppath_src=apppath_src[0:len(apppath_src)-1]
         else:
-            apppath_src=utils.path_dirname(path)    
-        stat_info = utils.path_stat(apppath_src)
+            apppath_src=utils_core.path_dirname(path)    
+        stat_info = utils_core.path_stat(apppath_src)
         mode = stat.S_IMODE(stat_info.st_mode)
         if operation=="CREATE_DIRECTORY":
-            utils.path_change_permissions(path,mode)
-            utils.path_change_owner(path, stat_info.st_uid, stat_info.st_gid)
+            utils_core.path_change_permissions(path,mode)
+            utils_core.path_change_owner(path, stat_info.st_uid, stat_info.st_gid)
         elif operation=="CREATE_FILE":
-            utils.path_change_permissions(path, ((mode & ~stat.S_IXUSR) & ~stat.S_IXGRP) & ~stat.S_IXOTH)
-            utils.path_change_owner(path, stat_info.st_uid, stat_info.st_gid)
+            utils_core.path_change_permissions(path, ((mode & ~stat.S_IXUSR) & ~stat.S_IXGRP) & ~stat.S_IXOTH)
+            utils_core.path_change_owner(path, stat_info.st_uid, stat_info.st_gid)
         elif operation=="COPY_DIRECTORY" or operation=="COPY_FILE":
-            utils.path_change_permissions(path,mode)
-            stat_info = utils.path_stat(utils.path_dirname(path)) #PRENDE IL GRUPPO E L'UTENTE DELLA CARTELLA PADRE 
-            utils.path_change_owner(path, stat_info.st_uid, stat_info.st_gid)
+            utils_core.path_change_permissions(path,mode)
+            stat_info = utils_core.path_stat(utils_core.path_dirname(path)) #PRENDE IL GRUPPO E L'UTENTE DELLA CARTELLA PADRE 
+            utils_core.path_change_owner(path, stat_info.st_uid, stat_info.st_gid)
         elif operation=="MOVE_DIRECTORY" or operation=="MOVE_FILE":
-            utils.path_change_permissions(path,mode)
-            utils.path_change_owner(path, stat_info.st_uid, stat_info.st_gid)
+            utils_core.path_change_permissions(path,mode)
+            utils_core.path_change_owner(path, stat_info.st_uid, stat_info.st_gid)
     
     def is_gui(self):
         return True
@@ -590,9 +590,9 @@ class Mac():
         try:
             sver="0"
             ptver="native" + os.sep + "installer.ver"
-            if utils.path_exists(ptver):
-                fver = utils.file_open(ptver, "rb")
-                sver=utils.bytes_to_str(fver.read())
+            if utils_core.path_exists(ptver):
+                fver = utils_core.file_open(ptver, "rb")
+                sver=utils_core.bytes_to_str(fver.read())
                 fver.close()
             bold=(int(sver)==0)
         except:
@@ -614,7 +614,7 @@ class Mac():
         lnc = ipc.Property()
         prcs = []
         try:
-            while not self._propguilnc_stop and utils.path_exists("guilnc.run"):
+            while not self._propguilnc_stop and utils_core.path_exists("guilnc.run"):
                 if not bload:
                     if lnc.exists("gui_launcher_" + suid):
                         try:
@@ -637,7 +637,7 @@ class Mac():
                                 break;
                             popenar.append(a)
                         libenv = os.environ
-                        libenv["LD_LIBRARY_PATH"]=utils.path_absname("runtime/lib")
+                        libenv["LD_LIBRARY_PATH"]=utils_core.path_absname("runtime/lib")
                         #print("Popen: " + " , ".join(popenar))
                         try:
                             p = subprocess.Popen(popenar, env=libenv)
@@ -662,10 +662,10 @@ class Mac():
             self._propguilnc_semaphore.acquire()
             try:
                 #COMPATIBILITA VERSIONI PRECEDENTI
-                if utils.path_exists("native/dwagguilnc"):
+                if utils_core.path_exists("native/dwagguilnc"):
                     self._propguilnc = {}
-                    if not utils.path_exists("guilnc.run"):
-                        f = utils.file_open("guilnc.run","wb")
+                    if not utils_core.path_exists("guilnc.run"):
+                        f = utils_core.file_open("guilnc.run","wb")
                         f.close()
             finally:
                 self._propguilnc_semaphore.release()                        
@@ -675,8 +675,8 @@ class Mac():
         if self.is_old_guilnc():
             self._propguilnc_semaphore.acquire()
             try:
-                if utils.path_exists("guilnc.run"):
-                    utils.path_remove("guilnc.run")
+                if utils_core.path_exists("guilnc.run"):
+                    utils_core.path_remove("guilnc.run")
                 if self._propguilnc is not None:
                     for l in self._propguilnc:
                         self._propguilnc[l].close()
@@ -700,8 +700,8 @@ class Mac():
                     for i in range(GUILNC_ARG_MAX):
                         fieldsdef.append({"name":"arg" + str(i),"size":GUILNC_ARG_SIZE})
                     def fix_perm(fn):
-                        utils.path_change_owner(fn, uid, -1)
-                        utils.path_change_permissions(fn, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP)
+                        utils_core.path_change_owner(fn, uid, -1)
+                        utils_core.path_change_permissions(fn, stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP)
                     lnc.create("gui_launcher_" + suid, fieldsdef, fix_perm)
                     self._propguilnc[suid]=lnc
                 else:

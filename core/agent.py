@@ -24,20 +24,20 @@ import ipc
 import importlib 
 import applications
 import struct
-import utils
+import utils_core
 import mimetypes
 import detectinfo
 import native
 
 
 def is_windows():
-    return utils.is_windows()
+    return utils_core.is_windows()
 
 def is_linux():
-    return utils.is_linux()
+    return utils_core.is_linux()
 
 def is_mac():
-    return utils.is_mac()
+    return utils_core.is_mac()
 
 def get_os_type():
     if is_linux():
@@ -67,7 +67,7 @@ def get_prop(prop,key,default=None):
 def generate_key(n):
     c = "".join([string.ascii_lowercase, string.ascii_uppercase,  string.digits])
     return "".join([random.choice(c) 
-                    for x in utils.nrange(n)])
+                    for x in utils_core.nrange(n)])
         
 def str2bool(v):
         return v.lower() in ("yes", "true", "t", "1")    
@@ -79,37 +79,37 @@ def bool2str(v):
         return 'True'
 
 def hash_password(pwd):
-    encoded = hashlib.sha256(utils.str_to_bytes(pwd,"utf8")).digest()
-    encoded = utils.enc_base64_encode(encoded)
-    return utils.bytes_to_str(encoded)
+    encoded = hashlib.sha256(utils_core.str_to_bytes(pwd,"utf8")).digest()
+    encoded = utils_core.enc_base64_encode(encoded)
+    return utils_core.bytes_to_str(encoded)
 
 def obfuscate_password(pwd):
-    return utils.bytes_to_str(utils.enc_base64_encode(utils.zlib_compress(utils.str_to_bytes(pwd,"utf8"))))
+    return utils_core.bytes_to_str(utils_core.enc_base64_encode(utils_core.zlib_compress(utils_core.str_to_bytes(pwd,"utf8"))))
 
 def read_obfuscated_password(enpwd):
-    return utils.bytes_to_str(utils.zlib_decompress(utils.enc_base64_decode(enpwd)),"utf8")
+    return utils_core.bytes_to_str(utils_core.zlib_decompress(utils_core.enc_base64_decode(enpwd)),"utf8")
     
 def read_config_file():
     c=None
     try:
-        f = utils.file_open("config.json", 'rb')
+        f = utils_core.file_open("config.json", 'rb')
     except:
-        e = utils.get_exception()
-        raise Exception("Error reading config file. " + utils.exception_to_string(e))
+        e = utils_core.get_exception()
+        raise Exception("Error reading config file. " + utils_core.exception_to_string(e))
     try:
         s=f.read()
-        c = json.loads(utils.bytes_to_str(s,"utf8"))
+        c = json.loads(utils_core.bytes_to_str(s,"utf8"))
     except:
-        e = utils.get_exception()
-        raise Exception("Error parse config file: " + utils.exception_to_string(e))
+        e = utils_core.get_exception()
+        raise Exception("Error parse config file: " + utils_core.exception_to_string(e))
     finally:
         f.close()
     return c
 
 def write_config_file(jo):
     s = json.dumps(jo, sort_keys=True, indent=1)
-    f = utils.file_open("config.json", 'wb')
-    f.write(utils.str_to_bytes(s,"utf8"))
+    f = utils_core.file_open("config.json", 'wb')
+    f.write(utils_core.str_to_bytes(s,"utf8"))
     f.close()
 
 class Agent():
@@ -122,7 +122,7 @@ class Agent():
     
     def __init__(self,args):
         
-        if utils.path_exists(".srcmode"):
+        if utils_core.path_exists(".srcmode"):
             sys.path.append("..")
         
         #Prepara il log
@@ -148,7 +148,7 @@ class Agent():
                 self._runonfly_runcode=arg[8:]
         if not self._runonfly:
             self._runonfly_runcode=None        
-        self._logger = utils.Logger(logconf)        
+        self._logger = utils_core.Logger(logconf)        
         #Inizializza campi
         self._task_pool = None
         self._config=None
@@ -207,7 +207,7 @@ class Agent():
         if self._noctrlfile==True:
             self._bstop=True
         else:
-            f = utils.file_open("dwagent.stop", 'wb')
+            f = utils_core.file_open("dwagent.stop", 'wb')
             f.close()           
     
     def _write_config_file(self):
@@ -219,8 +219,8 @@ class Agent():
             try:
                 self._config = read_config_file()
             except:
-                e = utils.get_exception()
-                self.write_err(utils.exception_to_string(e))
+                e = utils_core.get_exception()
+                self.write_err(utils_core.exception_to_string(e))
                 self._config = None
         finally:
             self._config_semaphore.release()
@@ -317,17 +317,17 @@ class Agent():
                 #READ installer.ver
                 sver=""
                 ptver="native" + os.sep + "installer.ver"
-                if utils.path_exists(ptver):
-                    fver = utils.file_open(ptver, "rb")
-                    sver="&version=" + utils.bytes_to_str(fver.read())
+                if utils_core.path_exists(ptver):
+                    fver = utils_core.file_open(ptver, "rb")
+                    sver="&version=" + utils_core.bytes_to_str(fver.read())
                     fver.close()
                 
                 spapp = ";".join(self.get_supported_applications())                
-                app_url = self._agent_url_primary + "getAgentPropertiesOnFly.dw?osTypeCode=" + str(get_os_type_code()) + sver + "&supportedApplications=" + utils.url_parse_quote_plus(spapp)
+                app_url = self._agent_url_primary + "getAgentPropertiesOnFly.dw?osTypeCode=" + str(get_os_type_code()) + sver + "&supportedApplications=" + utils_core.url_parse_quote_plus(spapp)
                 if self._runonfly_runcode is not None:
-                    app_url += "&runCode=" + utils.url_parse_quote_plus(self._runonfly_runcode)
+                    app_url += "&runCode=" + utils_core.url_parse_quote_plus(self._runonfly_runcode)
                 elif "preferred_run_user" in self._config:
-                    app_url += "&preferredRunUser=" + utils.url_parse_quote_plus(self._config["preferred_run_user"])
+                    app_url += "&preferredRunUser=" + utils_core.url_parse_quote_plus(self._config["preferred_run_user"])
             try:
                 prp_url = communication.get_url_prop(app_url, self.get_proxy_info())
                 if "error" in prp_url:
@@ -350,8 +350,8 @@ class Agent():
                         self._runonfly_password=get_prop(prp_url, 'userPassword', None)
                                         
             except:
-                e = utils.get_exception()
-                self.write_info("Error reading agentUrlPrimary: " + utils.exception_to_string(e))
+                e = utils_core.get_exception()
+                self.write_info("Error reading agentUrlPrimary: " + utils_core.exception_to_string(e))
                 return False
                 
             self._agent_server_state = get_prop(prp_url, 'state', None)
@@ -378,8 +378,8 @@ class Agent():
             self.write_info("Readed agent properties.")
             return True
         except:
-            e = utils.get_exception()
-            self.write_info("Error reading agentUrlPrimary: " + utils.exception_to_string(e))
+            e = utils_core.get_exception()
+            self.write_info("Error reading agentUrlPrimary: " + utils_core.exception_to_string(e))
             return False
     
     def set_config_password(self, pwd):
@@ -446,7 +446,7 @@ class Agent():
     
     def install_new_agent(self, user, password, name):
         spapp = ";".join(self.get_supported_applications())
-        url = self._agent_url_primary + "installNewAgent.dw?user=" + utils.url_parse_quote_plus(user) + "&password=" + utils.url_parse_quote_plus(password) + "&name=" + utils.url_parse_quote_plus(name) + "&osTypeCode=" + str(get_os_type_code()) +"&supportedApplications=" + utils.url_parse_quote_plus(spapp)
+        url = self._agent_url_primary + "installNewAgent.dw?user=" + utils_core.url_parse_quote_plus(user) + "&password=" + utils_core.url_parse_quote_plus(password) + "&name=" + utils_core.url_parse_quote_plus(name) + "&osTypeCode=" + str(get_os_type_code()) +"&supportedApplications=" + utils_core.url_parse_quote_plus(spapp)
         try:
             prop = communication.get_url_prop(url, self.get_proxy_info())
         except:
@@ -466,7 +466,7 @@ class Agent():
     
     def install_key(self,  code):
         spapp = ";".join(self.get_supported_applications())
-        url = self._agent_url_primary + "checkInstallCode.dw?code=" + utils.url_parse_quote_plus(code) + "&osTypeCode=" + str(get_os_type_code()) +"&supportedApplications=" + utils.url_parse_quote_plus(spapp)
+        url = self._agent_url_primary + "checkInstallCode.dw?code=" + utils_core.url_parse_quote_plus(code) + "&osTypeCode=" + str(get_os_type_code()) +"&supportedApplications=" + utils_core.url_parse_quote_plus(spapp)
         try:
             prop = communication.get_url_prop(url, self.get_proxy_info())
         except:
@@ -620,7 +620,7 @@ class Agent():
     
     def _check_hash_file(self, fpath, shash):
         md5 = hashlib.md5()
-        with utils.file_open(fpath,'rb') as f: 
+        with utils_core.file_open(fpath,'rb') as f: 
             for chunk in iter(lambda: f.read(8192), b''): 
                 md5.update(chunk)
         h = md5.hexdigest()
@@ -641,15 +641,15 @@ class Agent():
                 appar = nm.split("/")
                 if (len(appar)>1):
                     appnm = appar[len(appar)-1]
-                    npath+= nm[0:len(nm)-len(appnm)].replace("/",utils.path_sep)
-                if not utils.path_exists(npath):
-                    utils.path_makedirs(npath)
+                    npath+= nm[0:len(nm)-len(appnm)].replace("/",utils_core.path_sep)
+                if not utils_core.path_exists(npath):
+                    utils_core.path_makedirs(npath)
                 npath+=appnm
-                if utils.path_exists(npath):
-                    utils.path_remove(npath)
-                    if utils.path_exists(npath):
+                if utils_core.path_exists(npath):
+                    utils_core.path_remove(npath)
+                    if utils_core.path_exists(npath):
                         raise Exception("Cannot remove file " + npath + ".")
-                fd = utils.file_open(npath,"wb")
+                fd = utils_core.file_open(npath,"wb")
                 fd.write(zfile.read(nm))
                 fd.close()
         finally:
@@ -663,22 +663,22 @@ class Agent():
         if name_file + '@version' in rem_vers:
             rv = rem_vers[name_file + '@version']
             if cv!=rv:
-                if not utils.path_exists(folder):
-                    utils.path_makedirs(folder)
+                if not utils_core.path_exists(folder):
+                    utils_core.path_makedirs(folder)
                 self.write_info("Downloading file update " + name_file + "...")
                 app_url = self._agent_url_node + "getAgentFile.dw?name=" + name_file + "&version=" + rem_vers[name_file + '@version']
                 app_file = folder + name_file
                 communication.download_url_file(app_url ,app_file, self.get_proxy_info(), None)
                 self._check_hash_file(app_file, rem_vers[name_file + '@hash'])
                 self._unzip_file(app_file, folder)
-                utils.path_remove(app_file)
+                utils_core.path_remove(app_file)
                 cur_vers[name_file]=rv
                 
                 #TO REMOVE 03/11/2021 KEEP COMPATIBILITY WITH OLD LINUX INSTALLER
                 try:
                     if name_file=="agent.zip":
-                        if utils.path_exists(folder + "daemon.pyc"):
-                            utils.path_remove(folder + "daemon.pyc")                            
+                        if utils_core.path_exists(folder + "daemon.pyc"):
+                            utils_core.path_remove(folder + "daemon.pyc")                            
                 except:
                     None
                 
@@ -688,25 +688,25 @@ class Agent():
     
     def _monitor_update_file_create(self):
         try:
-            if not utils.path_exists("monitor.update"):
-                stopfile= utils.file_open("monitor.update", "w")
+            if not utils_core.path_exists("monitor.update"):
+                stopfile= utils_core.file_open("monitor.update", "w")
                 stopfile.close()
                 time.sleep(5)
         except:
-            e = utils.get_exception()
+            e = utils_core.get_exception()
             self.write_except(e)
     
     def _monitor_update_file_delete(self):
         try:
-            if utils.path_exists("monitor.update"):
-                utils.path_remove("monitor.update") 
+            if utils_core.path_exists("monitor.update"):
+                utils_core.path_remove("monitor.update") 
         except:
-            e = utils.get_exception()
+            e = utils_core.get_exception()
             self.write_except(e)
                 
     def _check_update(self):
         #IN SVILUPPO NON DEVE AGGIORNARE
-        if utils.path_exists(".srcmode"):
+        if utils_core.path_exists(".srcmode"):
             return True
         if self._is_reboot_agent() or self._update_ready:
             return False
@@ -718,48 +718,48 @@ class Agent():
             
             #FIX OLD VERSION 2018-12-20
             try:
-                if utils.path_exists("agent_listener.pyc"):
-                    utils.path_remove("agent_listener.pyc")
-                if utils.path_exists("agent_status_config.pyc"):
-                    utils.path_remove("agent_status_config.pyc")
-                if utils.path_exists("native_linux.pyc"):
-                    utils.path_remove("native_linux.pyc")
-                if utils.path_exists("native_windows.pyc"):
-                    utils.path_remove("native_windows.pyc")
-                if utils.path_exists("native_mac.pyc"):
-                    utils.path_remove("native_mac.pyc")
-                if utils.path_exists("user_interface.pyc"):
-                    utils.path_remove("user_interface.pyc")
-                if utils.path_exists("gdi.pyc"):
-                    utils.path_remove("gdi.pyc")
-                if utils.path_exists("messages"):
-                    utils.path_remove("messages")
-                if utils.path_exists("apps"):
-                    utils.path_remove("apps")
-                if utils.path_exists("LICENSES" + utils.path_sep + "agent"):
-                    utils.path_remove("LICENSES" + utils.path_sep + "agent")
+                if utils_core.path_exists("agent_listener.pyc"):
+                    utils_core.path_remove("agent_listener.pyc")
+                if utils_core.path_exists("agent_status_config.pyc"):
+                    utils_core.path_remove("agent_status_config.pyc")
+                if utils_core.path_exists("native_linux.pyc"):
+                    utils_core.path_remove("native_linux.pyc")
+                if utils_core.path_exists("native_windows.pyc"):
+                    utils_core.path_remove("native_windows.pyc")
+                if utils_core.path_exists("native_mac.pyc"):
+                    utils_core.path_remove("native_mac.pyc")
+                if utils_core.path_exists("user_interface.pyc"):
+                    utils_core.path_remove("user_interface.pyc")
+                if utils_core.path_exists("gdi.pyc"):
+                    utils_core.path_remove("gdi.pyc")
+                if utils_core.path_exists("messages"):
+                    utils_core.path_remove("messages")
+                if utils_core.path_exists("apps"):
+                    utils_core.path_remove("apps")
+                if utils_core.path_exists("LICENSES" + utils_core.path_sep + "agent"):
+                    utils_core.path_remove("LICENSES" + utils_core.path_sep + "agent")
             except:
                 None
             #FIX OLD VERSION 2018-12-20
             
             #FIX OLD VERSION 2021-09-22
             try:
-                if utils.path_exists("sharedmem.pyc"):
-                    utils.path_remove("sharedmem.pyc")
+                if utils_core.path_exists("sharedmem.pyc"):
+                    utils_core.path_remove("sharedmem.pyc")
             except:
                 None
             #FIX OLD VERSION 2021-09-22
             
             
             #Verifica se è presente un aggiornamento incompleto
-            if utils.path_exists("update"):
+            if utils_core.path_exists("update"):
                 self.write_info("Update incomplete: Needs reboot.")
                 self._update_ready=True
                 return False
                 
             #LEGGE 'fileversions.json'
-            f = utils.file_open("fileversions.json","rb")
-            cur_vers = json.loads(utils.bytes_to_str(f.read(), "utf8"))
+            f = utils_core.file_open("fileversions.json","rb")
+            cur_vers = json.loads(utils_core.bytes_to_str(f.read(), "utf8"))
             f.close()
             #LEGGE getAgentFile.dw?name=files.xml
             self._agent_url_node=None
@@ -777,12 +777,12 @@ class Agent():
                     self.write_info("Checking update: Error read files.xml: Node not available.")
                     return False
             except:
-                e = utils.get_exception()
-                self.write_info("Checking update: Error read files.xml: " + utils.exception_to_string(e))
+                e = utils_core.get_exception()
+                self.write_info("Checking update: Error read files.xml: " + utils_core.exception_to_string(e))
                 return False            
 
             #Rimuove updateTMP
-            if utils.path_exists("updateTMP"):
+            if utils_core.path_exists("updateTMP"):
                 shutil.rmtree("updateTMP")
             
             #UPDATER
@@ -798,23 +798,23 @@ class Agent():
                             upd_libnm="dwagupd"
                         
                     if upd_libnm is not None:
-                        if self._check_update_file(cur_vers, rem_vers, "agentupd_" + self._agent_native_suffix + ".zip",  "updateTMP" + utils.path_sep + "native" + utils.path_sep):
-                            if utils.path_exists("updateTMP" + utils.path_sep + "native" + utils.path_sep + upd_libnm):
-                                if utils.path_exists("native" + utils.path_sep + upd_libnm):
-                                    utils.path_remove("native" + utils.path_sep + upd_libnm)
-                                shutil.move("updateTMP" + utils.path_sep + "native" + utils.path_sep + upd_libnm, "native" + utils.path_sep + upd_libnm)
+                        if self._check_update_file(cur_vers, rem_vers, "agentupd_" + self._agent_native_suffix + ".zip",  "updateTMP" + utils_core.path_sep + "native" + utils_core.path_sep):
+                            if utils_core.path_exists("updateTMP" + utils_core.path_sep + "native" + utils_core.path_sep + upd_libnm):
+                                if utils_core.path_exists("native" + utils_core.path_sep + upd_libnm):
+                                    utils_core.path_remove("native" + utils_core.path_sep + upd_libnm)
+                                shutil.move("updateTMP" + utils_core.path_sep + "native" + utils_core.path_sep + upd_libnm, "native" + utils_core.path_sep + upd_libnm)
                     
             #AGENT
-            self._check_update_file(cur_vers, rem_vers, "agent.zip", "updateTMP" + utils.path_sep)
+            self._check_update_file(cur_vers, rem_vers, "agent.zip", "updateTMP" + utils_core.path_sep)
             if not self._runonfly and not self._agent_native_suffix=="linux_generic":
-                if self._check_update_file(cur_vers, rem_vers, "agentui.zip", "updateTMP" + utils.path_sep):
+                if self._check_update_file(cur_vers, rem_vers, "agentui.zip", "updateTMP" + utils_core.path_sep):
                     self._monitor_update_file_create()
-            self._check_update_file(cur_vers, rem_vers, "agentapps.zip", "updateTMP" + utils.path_sep)
+            self._check_update_file(cur_vers, rem_vers, "agentapps.zip", "updateTMP" + utils_core.path_sep)
                                     
             #LIB
             if self._agent_native_suffix is not None:
                 if not self._agent_native_suffix=="linux_generic":
-                    self._check_update_file(cur_vers, rem_vers, "agentlib_" + self._agent_native_suffix + ".zip",  "updateTMP" + utils.path_sep + "native" + utils.path_sep)                    
+                    self._check_update_file(cur_vers, rem_vers, "agentlib_" + self._agent_native_suffix + ".zip",  "updateTMP" + utils_core.path_sep + "native" + utils_core.path_sep)                    
                     
             #GUI
             monitor_libnm=None
@@ -828,23 +828,23 @@ class Agent():
                         monitor_libnm="dwaggdi.so"
                 #AGGIORNAMENTO LIBRERIE UI
                 if monitor_libnm is not None:
-                    if self._check_update_file(cur_vers, rem_vers, "agentui_" + self._agent_native_suffix + ".zip",  "updateTMP" + utils.path_sep + "native" + utils.path_sep):
+                    if self._check_update_file(cur_vers, rem_vers, "agentui_" + self._agent_native_suffix + ".zip",  "updateTMP" + utils_core.path_sep + "native" + utils_core.path_sep):
                         self._monitor_update_file_create()
-                        if utils.path_exists("updateTMP" + utils.path_sep + "native" + utils.path_sep + monitor_libnm):
-                            shutil.move("updateTMP" + utils.path_sep + "native" + utils.path_sep + monitor_libnm, "updateTMP" + utils.path_sep + "native" + utils.path_sep + monitor_libnm + "NEW")
+                        if utils_core.path_exists("updateTMP" + utils_core.path_sep + "native" + utils_core.path_sep + monitor_libnm):
+                            shutil.move("updateTMP" + utils_core.path_sep + "native" + utils_core.path_sep + monitor_libnm, "updateTMP" + utils_core.path_sep + "native" + utils_core.path_sep + monitor_libnm + "NEW")
             
-            if utils.path_exists("updateTMP"):
+            if utils_core.path_exists("updateTMP"):
                 s = json.dumps(cur_vers , sort_keys=True, indent=1)
-                f = utils.file_open("updateTMP" + utils.path_sep + "fileversions.json", "wb")
-                f.write(utils.str_to_bytes(s,"utf8"))
+                f = utils_core.file_open("updateTMP" + utils_core.path_sep + "fileversions.json", "wb")
+                f.write(utils_core.str_to_bytes(s,"utf8"))
                 f.close()
                 shutil.move("updateTMP", "update")
                 self.write_info("Update ready: Needs reboot.")
                 self._update_ready=True
                 return False
         except:
-            e = utils.get_exception()
-            if utils.path_exists("updateTMP"):
+            e = utils_core.get_exception()
+            if utils_core.path_exists("updateTMP"):
                 shutil.rmtree("updateTMP")
             self.write_except(e)
             return False        
@@ -859,10 +859,10 @@ class Agent():
             elif is_mac():
                 monitor_libnm="dwaggdi.so"
             if monitor_libnm is not None:
-                if utils.path_exists("native" + utils.path_sep + monitor_libnm + "NEW"):
-                    if utils.path_exists("native" + utils.path_sep + monitor_libnm):
-                        utils.path_remove("native" + utils.path_sep + monitor_libnm)
-                    shutil.move("native" + utils.path_sep + monitor_libnm + "NEW", "native" + utils.path_sep + monitor_libnm)
+                if utils_core.path_exists("native" + utils_core.path_sep + monitor_libnm + "NEW"):
+                    if utils_core.path_exists("native" + utils_core.path_sep + monitor_libnm):
+                        utils_core.path_remove("native" + utils_core.path_sep + monitor_libnm)
+                    shutil.move("native" + utils_core.path_sep + monitor_libnm + "NEW", "native" + utils_core.path_sep + monitor_libnm)
         except:
             self.write_except("Update monitor ready: Needs reboot.")
         self._monitor_update_file_delete()
@@ -921,7 +921,7 @@ class Agent():
     def _reload_agent(self, ms):
         self._config_semaphore.acquire()
         try:
-            self._breloadagentcnt=utils.Counter(ms)
+            self._breloadagentcnt=utils_core.Counter(ms)
         finally:
             self._config_semaphore.release()
     
@@ -1012,10 +1012,10 @@ class Agent():
             #Legge pid
             self._check_pid_cnt=0
             self._svcpid=None
-            if utils.path_exists("dwagent.pid"):
+            if utils_core.path_exists("dwagent.pid"):
                 try:
-                    f = utils.file_open("dwagent.pid")
-                    spid = utils.bytes_to_str(f.read())
+                    f = utils_core.file_open("dwagent.pid")
+                    spid = utils_core.bytes_to_str(f.read())
                     f.close()
                     self._svcpid = int(spid)
                 except:
@@ -1023,7 +1023,7 @@ class Agent():
             
             if self._noctrlfile==False:
                 #Crea il file .start
-                f = utils.file_open("dwagent.start", 'wb')
+                f = utils_core.file_open("dwagent.start", 'wb')
                 f.close()
             
         
@@ -1032,12 +1032,12 @@ class Agent():
             try:
                 self.get_osmodule().init_guilnc(self)
             except:
-                ge = utils.get_exception()
+                ge = utils_core.get_exception()
                 self.write_except(ge, "INIT GUI LNC: ")
                 
         #Crea cartelle necessarie
-        if not utils.path_exists("native"):
-            utils.path_makedirs("native")
+        if not utils_core.path_exists("native"):
+            utils_core.path_makedirs("native")
                 
         #Crea taskpool
         self._task_pool = communication.ThreadPool("Task", 50, 30, self.write_except)
@@ -1062,14 +1062,14 @@ class Agent():
                                 prfcfg={}
                                 self._agent_debug_mode = self.get_config('debug_mode',False)                                
                                 if self._agent_debug_mode:
-                                    self._logger.set_level(utils.LOGGER_DEBUG)
-                                    prfcfg["debug_path"]=utils.os_getcwd()                                    
-                                    if not prfcfg["debug_path"].endswith(utils.path_sep):
-                                        prfcfg["debug_path"]+=utils.path_sep                                    
+                                    self._logger.set_level(utils_core.LOGGER_DEBUG)
+                                    prfcfg["debug_path"]=utils_core.os_getcwd()                                    
+                                    if not prfcfg["debug_path"].endswith(utils_core.path_sep):
+                                        prfcfg["debug_path"]+=utils_core.path_sep                                    
                                     prfcfg["debug_indentation_max"] = self.get_config('debug_indentation_max',-1)
                                     prfcfg["debug_thread_filter"] = self.get_config('debug_thread_filter',None)
                                     prfcfg["debug_class_filter"] = self.get_config('debug_class_filter',None)
-                                    self._debug_profile=utils.DebugProfile(self,prfcfg)
+                                    self._debug_profile=utils_core.DebugProfile(self,prfcfg)
                                     threading.setprofile(self._debug_profile.get_function)
                             #ssl_cert_required
                             if self.get_config('ssl_cert_required', True)==False:
@@ -1085,7 +1085,7 @@ class Agent():
                                 self._listener_ipc.start()
                     except:
                         self._listener_ipc = None
-                        asc = utils.get_exception()
+                        asc = utils_core.get_exception()
                         self.write_except(asc, "INIT STATUSCONFIG LISTENER: ")
                             
                     #Start HTTP listener (NOT USED)
@@ -1101,7 +1101,7 @@ class Agent():
                                     self._listener_http.start()
                                 except:
                                     self._listener_http = None
-                                    ace = utils.get_exception()
+                                    ace = utils_core.get_exception()
                                     self.write_except(ace, "INIT LISTENER: ")
                             
                     self._reboot_agent_reset()
@@ -1146,7 +1146,7 @@ class Agent():
         except KeyboardInterrupt:
             self.destroy()            
         except:
-            ex=utils.get_exception()
+            ex=utils_core.get_exception()
             self.destroy()
             self.write_except(ex, "AGENT: ")
             
@@ -1160,14 +1160,14 @@ class Agent():
             try:
                 self._listener_http.close()
             except:
-                ace = utils.get_exception()
+                ace = utils_core.get_exception()
                 self.write_except(ace, "TERM LISTENER: ")
         
         if self._listener_ipc is not None:
             try:
                 self._listener_ipc.close()
             except:
-                ace = utils.get_exception()
+                ace = utils_core.get_exception()
                 self.write_except(ace, "TERM STATUSCONFIG LISTENER: ")
         
         if self._runonfly_ipc is not None:
@@ -1175,7 +1175,7 @@ class Agent():
                 self._runonfly_ipc.close()
                 self._runonfly_ipc=None
             except:
-                ace = utils.get_exception()
+                ace = utils_core.get_exception()
                 self.write_except(ace, "CLOSE RUNONFLY SHAREDMEM: ")
         
         #GUI LAUNCHER OLD VERSION 03/11/2021 (DO NOT REMOVE)
@@ -1183,7 +1183,7 @@ class Agent():
             try:
                 self.get_osmodule().term_guilnc()
             except:
-                ge = utils.get_exception()
+                ge = utils_core.get_exception()
                 self.write_except(ge, "TERM GUI LNC: ")
         
         if self._agent_profiler is not None:
@@ -1216,7 +1216,7 @@ class Agent():
             if self._noctrlfile==True:
                 return not self._bstop
             else:
-                if utils.path_exists("dwagent.stop"):
+                if utils_core.path_exists("dwagent.stop"):
                     return False
                 if self._svcpid is not None:
                     if not self._check_pid(self._svcpid):
@@ -1231,22 +1231,22 @@ class Agent():
             try:
                 self._listener_ipc.close()
             except:
-                ace = utils.get_exception()
+                ace = utils_core.get_exception()
                 self.write_except(ace, "TERM STATUS LISTENER: ")
 
     
     def write_info(self, msg):
-        self._logger.write(utils.LOGGER_INFO,  msg)
+        self._logger.write(utils_core.LOGGER_INFO,  msg)
 
     def write_err(self, msg):
-        self._logger.write(utils.LOGGER_ERROR,  msg)
+        self._logger.write(utils_core.LOGGER_ERROR,  msg)
         
     def write_debug(self, msg):
         if self._agent_debug_mode:
-            self._logger.write(utils.LOGGER_DEBUG,  msg)
+            self._logger.write(utils_core.LOGGER_DEBUG,  msg)
     
     def write_except(self, e,  tx = u""):        
-        self._logger.write(utils.LOGGER_ERROR,  utils.get_exception_string(e,  tx))
+        self._logger.write(utils_core.LOGGER_ERROR,  utils_core.get_exception_string(e,  tx))
     
     def _update_onfly_status(self,st):
         if self._runonfly:
@@ -1298,7 +1298,7 @@ class Agent():
     def _update_supported_apps(self,binit):
         if binit:
             self._suppapps=";".join(self.get_supported_applications())
-            self._suppappscheckcnt=utils.Counter(20) #20 SECONDS
+            self._suppappscheckcnt=utils_core.Counter(20) #20 SECONDS
         else:
             try:
                 if self._suppappscheckcnt.is_elapsed():
@@ -1312,14 +1312,14 @@ class Agent():
                         }                
                         self._agent_conn.send_message(m)
             except:
-                e = utils.get_exception()
+                e = utils_core.get_exception()
                 self.write_except(e)
     
     def _get_sys_info(self):
         m = {
                 'osType':  get_os_type(),
                 'osTypeCode':  str(get_os_type_code()), 
-                'fileSeparator':  utils.path_sep,
+                'fileSeparator':  utils_core.path_sep,
                 'supportedApplications': self._suppapps,                
             }        
         
@@ -1334,9 +1334,9 @@ class Agent():
         if hwnm is not None:
             m["hwName"]=hwnm
         #Send versions info
-        if not utils.path_exists(".srcmode"):
-            f = utils.file_open("fileversions.json","rb")
-            cur_vers = json.loads(utils.bytes_to_str(f.read(),"utf8"))
+        if not utils_core.path_exists(".srcmode"):
+            f = utils_core.file_open("fileversions.json","rb")
+            cur_vers = json.loads(utils_core.bytes_to_str(f.read(),"utf8"))
             f.close()
             for vn in cur_vers:
                 if vn[0:4]!="app_":
@@ -1363,7 +1363,7 @@ class Agent():
                 appconn = Connection(self, None, prop_conn, self.get_proxy_info())
                 self._agent_conn=AgentConn(self, appconn)                
             except:
-                ee = utils.get_exception()
+                ee = utils_core.get_exception()
                 if appconn is not None:
                     appconn.close()
                 raise ee
@@ -1408,7 +1408,7 @@ class Agent():
             self.destroy()
             return True
         except:
-            inst = utils.get_exception()
+            inst = utils_core.get_exception()
             self.write_except(inst)
             return False
         finally:
@@ -1435,13 +1435,13 @@ class Agent():
             elif tp=="lib":
                 self.write_info("Lib " + name + " updating...")                
             app_file = name_file
-            if utils.path_exists(app_file):
-                utils.path_remove(app_file)
+            if utils_core.path_exists(app_file):
+                utils_core.path_remove(app_file)
             app_url = self._agent_url_node + "getAgentFile.dw?name=" + name_file + "&version=" + rem_vers[name_file + '@version']
             communication.download_url_file(app_url ,app_file, self.get_proxy_info(), None)
             self._check_hash_file(app_file, rem_vers[name_file + '@hash'])
             self._unzip_file(app_file, "")
-            utils.path_remove(app_file)
+            utils_core.path_remove(app_file)
             cur_vers[name_file]=rv
             return True
         return False
@@ -1452,9 +1452,9 @@ class Agent():
                 app_url = self._agent_url_node + "getAgentFile.dw?name=files.xml"
                 self._node_files_info = communication.get_url_prop(app_url, self.get_proxy_info())
             except:
-                e = utils.get_exception()
+                e = utils_core.get_exception()
                 self._node_files_info=None
-                raise Exception("Error read files.xml: "  + utils.exception_to_string(e))
+                raise Exception("Error read files.xml: "  + utils_core.exception_to_string(e))
             if "error" in self._node_files_info:
                 self._node_files_info=None
                 raise Exception("Error read files.xml: " + self._node_files_info['error'])
@@ -1467,7 +1467,7 @@ class Agent():
         return False
     
     def _update_libs_apps(self,tp,name):
-        if utils.path_exists(".srcmode"):
+        if utils_core.path_exists(".srcmode"):
             if tp=="app":
                 self._update_app_dependencies(name)
             elif tp=="lib":
@@ -1481,16 +1481,16 @@ class Agent():
             elif tp=="lib":
                 zipname="lib_" + name + "_" + self._agent_native_suffix + ".zip"
             if self._update_libs_apps_file_exists(arfiles, zipname):
-                f = utils.file_open("fileversions.json","rb")
-                cur_vers = json.loads(utils.bytes_to_str(f.read(),"utf8"))
+                f = utils_core.file_open("fileversions.json","rb")
+                cur_vers = json.loads(utils_core.bytes_to_str(f.read(),"utf8"))
                 f.close()
-                if tp=="app" and not utils.path_exists("app_" + name):
-                    utils.path_makedirs("app_" + name)
+                if tp=="app" and not utils_core.path_exists("app_" + name):
+                    utils_core.path_makedirs("app_" + name)
                 bup = self._update_libs_apps_file(tp, name, cur_vers, rem_vers, zipname)                
                 if bup:                
                     s = json.dumps(cur_vers , sort_keys=True, indent=1)
-                    f = utils.file_open("fileversions.json", "wb")
-                    f.write(utils.str_to_bytes(s,"utf8"))
+                    f = utils_core.file_open("fileversions.json", "wb")
+                    f.write(utils_core.str_to_bytes(s,"utf8"))
                     f.close()
                     if tp=="app":
                         self.write_info("App " + name + " updated.")
@@ -1504,8 +1504,8 @@ class Agent():
             else:
                 None #OS not needs of this lib or app
         except:
-            e = utils.get_exception()
-            raise Exception("Error update " + tp + " " + name + ": " + utils.exception_to_string(e) + " Please reboot the agent or OS.")
+            e = utils_core.get_exception()
+            raise Exception("Error update " + tp + " " + name + ": " + utils_core.exception_to_string(e) + " Please reboot the agent or OS.")
     
     def _update_lib_dependencies(self,name):
         appcnf=native.get_library_config(name)
@@ -1522,7 +1522,7 @@ class Agent():
                     appcnf["refcount"]=0
                     self._libs[name]=appcnf                    
         except:    
-            e = utils.get_exception()        
+            e = utils_core.get_exception()        
             raise e
     
     def load_lib(self, name):
@@ -1543,8 +1543,8 @@ class Agent():
                     return cnflib["refobject"]
             return None
         except:
-            e = utils.get_exception()
-            self.write_except("Lib " + name + " load error: " + utils.exception_to_string(e))
+            e = utils_core.get_exception()
+            self.write_except("Lib " + name + " load error: " + utils_core.exception_to_string(e))
             raise e
         finally:
             self._libs_apps_semaphore.release()        
@@ -1565,27 +1565,27 @@ class Agent():
                         del self._libs[name]
                         self.write_info("Lib " + name + " unloaded.")
         except:
-            e = utils.get_exception()
-            self.write_except("Lib " + name + " unload error: " + utils.exception_to_string(e))
+            e = utils_core.get_exception()
+            self.write_except("Lib " + name + " unload error: " + utils_core.exception_to_string(e))
             raise e
         finally:
             self._libs_apps_semaphore.release()
     
     
     def _get_app_config(self,name):
-        pthfc="app_" + name + utils.path_sep + "config.json"
-        if utils.path_exists(".srcmode"):
-            pthfc=".." + utils.path_sep + pthfc
-        if utils.path_exists(pthfc):
-            f = utils.file_open(pthfc,"rb")
-            conf = json.loads(utils.bytes_to_str(f.read(),"utf8"))
+        pthfc="app_" + name + utils_core.path_sep + "config.json"
+        if utils_core.path_exists(".srcmode"):
+            pthfc=".." + utils_core.path_sep + pthfc
+        if utils_core.path_exists(pthfc):
+            f = utils_core.file_open(pthfc,"rb")
+            conf = json.loads(utils_core.bytes_to_str(f.read(),"utf8"))
             f.close()
             return conf
         else:
             return None
     
     def _reload_apps(self,bforce):
-        if utils.path_exists(".srcmode"):
+        if utils_core.path_exists(".srcmode"):
             return
         #IF bforce=True DESTROY APP AND DEPENDENCIES
         #IF bforce=False DESTROY APP ONLY IF DEPENDENCIES ARE UNLOADED
@@ -1597,7 +1597,7 @@ class Agent():
                     if self._apps_to_reload[appmn]==True:
                         self._reload_app(torem,appmn,bforce)
         except:
-            e = utils.get_exception()         
+            e = utils_core.get_exception()         
             self.write_except(e)
         finally:
             try:
@@ -1677,8 +1677,8 @@ class Agent():
         except AttributeError:
             return True
         except:
-            e = utils.get_exception()
-            self.write_except("App " + name + " unload error: " + utils.exception_to_string(e))
+            e = utils_core.get_exception()
+            self.write_except("App " + name + " unload error: " + utils_core.exception_to_string(e))
             return False
                    
     def _init_app(self,name):
@@ -1686,15 +1686,15 @@ class Agent():
             self._update_libs_apps("app",name)
             func=None
             try:
-                utils.unload_package("app_" + name)
+                utils_core.unload_package("app_" + name)
                 objlib = importlib.import_module("app_" + name)
                 func = getattr(objlib, 'get_instance', None)
                 ret = func(self)
                 self._apps[name]=ret;
                 self.write_info("App " + name + " loaded.")
             except:
-                e = utils.get_exception()
-                raise Exception("App " + name + " load error: " + utils.exception_to_string(e))
+                e = utils_core.get_exception()
+                raise Exception("App " + name + " load error: " + utils_core.exception_to_string(e))
     
     def get_app(self,name):
         self._libs_apps_semaphore.acquire()
@@ -1702,7 +1702,7 @@ class Agent():
             self._init_app(name)
             return self._apps[name]
         except:
-            e = utils.get_exception()
+            e = utils_core.get_exception()
             self.write_except(e)
             raise e
         finally:
@@ -1730,7 +1730,7 @@ class Agent():
                 if func is not None:
                     func(idconn)
             except:
-                e = utils.get_exception()
+                e = utils_core.get_exception()
                 self.write_except(e)
     
     def _close_all_sessions(self):
@@ -1742,8 +1742,8 @@ class Agent():
                     ses.close()
                     self._fire_close_conn_apps(sid)
                 except:
-                    ex = utils.get_exception()
-                    self.write_err(utils.exception_to_string(ex))
+                    ex = utils_core.get_exception()
+                    self.write_err(utils_core.exception_to_string(ex))
             self._sessions={}
         finally:
             self._sessions_semaphore.release()        
@@ -1791,7 +1791,7 @@ class Agent():
             finally:
                 self._sessions_semaphore.release()
         except:
-            ee = utils.get_exception()
+            ee = utils_core.get_exception()
             if appconn is not None:
                 appconn.close()
             raise ee        
@@ -1929,8 +1929,8 @@ class Connection():
         if rconf is not None and self._raw.is_connection_lost() and self._raw.is_close():
             breconmsg=True
             self._agent.write_info("Recovering " + rconf.get_msg_log() + "...")
-            cntretry=utils.Counter()
-            cntwait=utils.Counter()
+            cntretry=utils_core.Counter()
+            cntwait=utils_core.Counter()
             appattemp=0
             while not cntretry.is_elapsed(rconf.get_timeout()) and ((rconf.get_max_attempt()==0) or (appattemp<rconf.get_max_attempt())):
                 if cntwait.is_elapsed(rconf.get_intervall()):
@@ -2142,12 +2142,12 @@ class Message():
                 self._conn._semaphore.release()
             if dt is not None:
                 try:
-                    dt = utils.zlib_decompress(dt)
+                    dt = utils_core.zlib_decompress(dt)
                     msg=json.loads(dt.decode("utf8"))
                     if self._check_recovery_msg(msg):
                         self._agent._task_pool.execute(self._fire_msg, msg)
                 except:
-                    e = utils.get_exception()
+                    e = utils_core.get_exception()
                     self._agent.write_except(e)
                 finally:
                     self._clear_temp_msg()
@@ -2233,11 +2233,11 @@ class Message():
                 if pos==0:
                     conn.send(dt)
                 else:
-                    conn.send(utils.buffer_new(dt,pos,tosnd))
+                    conn.send(utils_core.buffer_new(dt,pos,tosnd))
                 self._bwsendcalc.add(tosnd)
                 tosnd=0
             else:                
-                conn.send(utils.buffer_new(dt,pos,bfsz))
+                conn.send(utils_core.buffer_new(dt,pos,bfsz))
                 self._bwsendcalc.add(bfsz)
                 tosnd-=bfsz
                 pos+=bfsz
@@ -2247,13 +2247,13 @@ class Message():
         while True:
             try:
                 
-                dt = utils.zlib_compress(bytearray(json.dumps(msg),"utf8"))
+                dt = utils_core.zlib_compress(bytearray(json.dumps(msg),"utf8"))
                 ba=bytearray(struct.pack("!I",len(dt)))
                 ba+=dt
                 self._send_conn(self._conn, ba)
                 break
             except:
-                e = utils.get_exception()
+                e = utils_core.get_exception()
                 if not self._conn.wait_recovery():
                     raise e
            
@@ -2401,14 +2401,14 @@ class AgentConn(Message):
             if resp is not None:
                 self.send_response(msg, resp)
         except:
-            e = utils.get_exception()
+            e = utils_core.get_exception()
             self._agent.write_except(e)
             if 'requestKey' in msg:
                 m = {
                     'name': 'error' , 
                     'requestKey':  msg['requestKey'] , 
                     'class':  e.__class__.__name__ , 
-                    'message':  utils.exception_to_string(e)
+                    'message':  utils_core.exception_to_string(e)
                 }
                 self.send_message(m)
                 #if self._agent._connection is not None:
@@ -2573,10 +2573,10 @@ class Session(Message):
             else:
                 raise Exception("Invalid message name: " + msg_name)                
         except:
-            e = utils.get_exception()
+            e = utils_core.get_exception()
             self._agent.write_except(e)
             if 'requestKey' in msg:
-                self.send_response_error(msg,e.__class__.__name__ ,utils.exception_to_string(e))
+                self.send_response_error(msg,e.__class__.__name__ ,utils_core.exception_to_string(e))
             
     def _request(self, msg):
         resp = ""
@@ -2595,8 +2595,8 @@ class Session(Message):
             else:
                 resp = "K:null"
         except:
-            e = utils.get_exception()
-            m = utils.exception_to_string(e)
+            e = utils_core.get_exception()
+            m = utils_core.exception_to_string(e)
             self._agent.write_debug(m)
             resp=  ":".join(["E", m])
         return resp        
@@ -2613,12 +2613,12 @@ class Session(Message):
             if not wsock.is_accept():
                 raise Exception("WebSocket not accepted")
         except:
-            e = utils.get_exception()
+            e = utils_core.get_exception()
             try:
                 wsock.close()
             except:
                 None
-            resp["error"]=utils.exception_to_string(e)            
+            resp["error"]=utils_core.exception_to_string(e)            
         resp['name']='response'
         resp['requestKey']=msg['requestKey']
         return resp
@@ -2635,12 +2635,12 @@ class Session(Message):
             if not wsock.is_accept():
                 raise Exception("WebSocket not accepted")
         except:
-            e = utils.get_exception()
+            e = utils_core.get_exception()
             try:
                 wsock.close()
             except:
                 None
-            resp["error"]=utils.exception_to_string(e)
+            resp["error"]=utils_core.exception_to_string(e)
         resp['name']='response'
         resp['requestKey']=msg['requestKey']
         return resp    
@@ -2660,7 +2660,7 @@ class Session(Message):
                     resp["Content-Type"] = "application/octet-stream"
                 else:
                     resp["Content-Type"] = mt[0]
-                resp["Content-Disposition"] = "attachment; filename=\"" + fdownload.get_name() + "\"; filename*=UTF-8''" + utils.url_parse_quote(fdownload.get_name().encode("utf-8"), safe='')
+                resp["Content-Disposition"] = "attachment; filename=\"" + fdownload.get_name() + "\"; filename*=UTF-8''" + utils_core.url_parse_quote(fdownload.get_name().encode("utf-8"), safe='')
                 #ret["Cache-Control"] = "no-cache, must-revalidate" NON FUNZIONA PER IE7
                 #ret["Pragma"] = "no-cache"
                 resp["Expires"] = "Sat, 26 Jul 1997 05:00:00 GMT"
@@ -2668,12 +2668,12 @@ class Session(Message):
             else:
                 raise Exception("Download file not accepted")
         except:
-            e = utils.get_exception()
+            e = utils_core.get_exception()
             try:
                 fdownload.close()
             except:
                 None
-            resp["error"]=utils.exception_to_string(e)
+            resp["error"]=utils_core.exception_to_string(e)
         resp['name']='response'
         resp['requestKey']=msg['requestKey']
         return resp
@@ -2690,12 +2690,12 @@ class Session(Message):
             if not fupload.is_accept():
                 raise Exception("Upload file not accepted")
         except:
-            e = utils.get_exception()
+            e = utils_core.get_exception()
             try:
                 fupload.close()
             except:
                 None
-            resp["error"]=utils.exception_to_string(e)
+            resp["error"]=utils_core.exception_to_string(e)
         resp['name']='response'
         resp['requestKey']=msg['requestKey']
         return resp
@@ -2813,7 +2813,7 @@ class WebSocket:
         self._parent._set_last_activity_time()
         if not self._bclose:            
             ba=bytearray(struct.pack("!IB",len(data)+1,WebSocket.DATA_STRING))
-            ba+=utils.str_to_bytes(data)
+            ba+=utils_core.str_to_bytes(data)
             self._parent._send_conn(self._conn,ba)
     
     def send_bytes(self,data):
@@ -2922,9 +2922,9 @@ class WebSocketSimulate:
                                 tpdata = prppst["type_" + str(i)]
                                 prprequest = prppst["data_" + str(i)]
                                 if tpdata==WebSocketSimulate.DATA_BYTES:
-                                    prprequest=utils.enc_base64_decode(prprequest)
+                                    prprequest=utils_core.enc_base64_decode(prprequest)
                                 else:
-                                    prprequest=utils.str_to_bytes(prprequest,"utf8")
+                                    prprequest=utils_core.str_to_bytes(prprequest,"utf8")
                                 self._on_data(self, tpdata, prprequest)
                         #Invia risposte
                         arsend=None
@@ -2983,9 +2983,9 @@ class WebSocketSimulate:
         bts+=bytearray(shead,"ascii")
 
         #COMPRESS RESPONSE
-        appout = utils.BytesIO()
+        appout = utils_core.BytesIO()
         f = gzip.GzipFile(fileobj=appout, mode='w', compresslevel=5)
-        f.write(utils.str_to_bytes(sdata))
+        f.write(utils_core.str_to_bytes(sdata))
         f.close()
         dt = appout.getvalue()
         
@@ -3019,7 +3019,7 @@ class WebSocketSimulate:
         if not self._bclose:
             dt=data
             if tpdata==WebSocketSimulate.DATA_BYTES:
-                dt=utils.bytes_to_str(utils.enc_base64_encode(dt))
+                dt=utils_core.bytes_to_str(utils_core.enc_base64_encode(dt))
             #print("LEN: " + str(len(data)) + " LEN B64: " + str(len(dt)))
             self._data_list.append({"type": tpdata, "data": dt})
                         
@@ -3030,7 +3030,7 @@ class WebSocketSimulate:
             for i in range(len(data)):
                 dt=data[i]
                 if tpdata==WebSocketSimulate.DATA_BYTES:
-                    dt=utils.bytes_to_str(utils.enc_base64_encode(dt))
+                    dt=utils_core.bytes_to_str(utils_core.enc_base64_encode(dt))
                 #print("LEN: " + str(len(data[i])) + " LEN B64: " + str(len(dt)))
                 self._data_list.append({"type": tpdata, "data": dt})
             
@@ -3069,8 +3069,8 @@ class Download():
 
     def accept(self, path):
         self._path=path
-        self._name=utils.path_basename(self._path)
-        self._length=utils.path_size(self._path)
+        self._name=utils_core.path_basename(self._path)
+        self._length=utils_core.path_size(self._path)
         self._calcbps=communication.BandwidthCalculator()        
         self._bclose = False
         self._status="T"
@@ -3105,7 +3105,7 @@ class Download():
         self._parent.inc_activities_value("downloads")
         fl=None
         try:
-            fl = utils.file_open(self._path, 'rb')
+            fl = utils_core.file_open(self._path, 'rb')
             bsz=32*1024
             while not self.is_close():
                 bts = fl.read(bsz)
@@ -3177,21 +3177,21 @@ class Upload():
 
     def accept(self, path):
         self._path=path
-        self._name=utils.path_basename(self._path)
+        self._name=utils_core.path_basename(self._path)
         if 'length' not in self._props:
             raise Exception("upload file length in none.")
         self._length=int(self._props['length'])
         self._calcbps=communication.BandwidthCalculator() 
         self._cntSendstatus=None
         try:
-            sprnpath=utils.path_dirname(path)    
+            sprnpath=utils_core.path_dirname(path)    
             while True:
-                r="".join([random.choice("0123456789") for x in utils.nrange(6)])            
-                self._tmpname=sprnpath + utils.path_sep + "temporary" + r + ".dwsupload";
-                if not utils.path_exists(self._tmpname):
-                    utils.file_open(self._tmpname, 'wb').close() #Crea il file per imposta i permessi
+                r="".join([random.choice("0123456789") for x in utils_core.nrange(6)])            
+                self._tmpname=sprnpath + utils_core.path_sep + "temporary" + r + ".dwsupload";
+                if not utils_core.path_exists(self._tmpname):
+                    utils_core.file_open(self._tmpname, 'wb').close() #Crea il file per imposta i permessi
                     self._agent.get_osmodule().fix_file_permissions("CREATE_FILE",self._tmpname)
-                    self._fltmp = utils.file_open(self._tmpname, 'wb')
+                    self._fltmp = utils_core.file_open(self._tmpname, 'wb')
                     break
         
             self._bclose = False
@@ -3200,7 +3200,7 @@ class Upload():
             self._baccept=True
             self._last_time_transfered = 0
         except:
-            e = utils.get_exception()
+            e = utils_core.get_exception()
             self._remove_temp_file()
             raise e
         self._parent.inc_activities_value("uploads")
@@ -3211,8 +3211,8 @@ class Upload():
         except:
             None
         try:
-            if utils.path_exists(self._tmpname):
-                utils.path_remove(self._tmpname)
+            if utils_core.path_exists(self._tmpname):
+                utils_core.path_remove(self._tmpname)
         except:
             None        
     
@@ -3246,16 +3246,16 @@ class Upload():
         try:
             if not self._bclose:
                 if self._status == "T":
-                    if utils.bytes_get(data,0)==ord('C'): 
+                    if utils_core.bytes_get(data,0)==ord('C'): 
                         self._enddatafile=True;
                         #SCRIVE FILE
                         try:
                             self._fltmp.close()
-                            if utils.path_exists(self._path):
-                                if utils.path_isdir(self._path):
+                            if utils_core.path_exists(self._path):
+                                if utils_core.path_isdir(self._path):
                                     raise Exception("")
                                 else:
-                                    utils.path_remove(self._path)
+                                    utils_core.path_remove(self._path)
                             shutil.move(self._tmpname, self._path)
                             self._status = "C"
                             self._parent._send_conn(self._conn, bytearray(self._status, "utf8"))                            
@@ -3265,12 +3265,12 @@ class Upload():
                         self.close()
                     else: #if data[0]=='D': 
                         lndt=len(data)-1;
-                        self._fltmp.write(utils.buffer_new(data,1,lndt))
+                        self._fltmp.write(utils_core.buffer_new(data,1,lndt))
                         self._calcbps.add(lndt)
                         if self._cntSendstatus is None or self._cntSendstatus.is_elapsed(0.5):
                             self._parent._send_conn(self._conn, bytearray("T" + str(self._calcbps.get_transfered()) + ";" + str(self._calcbps.get_bps()) , "utf8"))
                             if self._cntSendstatus is None:
-                                self._cntSendstatus=utils.Counter()
+                                self._cntSendstatus=utils_core.Counter()
                             else:
                                 self._cntSendstatus.reset()
                         #print("UPLOAD - NAME:" + self._name + " LEN: " + str(self._calcbps.get_transfered()) +  "  BPS: " + str(self._calcbps.get_bps()))
@@ -3346,7 +3346,7 @@ class AgentProfiler(threading.Thread):
         #yappi.set_clock_type("wall")
         #yappi.start(builtins=True)
         yappi.start()
-        cntr = utils.Counter()
+        cntr = utils_core.Counter()
         while not self._destroy:
             if cntr.is_elapsed(self._fileupdateintervall):
                 cntr.reset()
@@ -3410,7 +3410,7 @@ if __name__ == "__main__":
     if len(sys.argv)>1:
         a1=sys.argv[1]
         if a1 is not None and a1.lower().startswith("app="):
-            if utils.path_exists(".srcmode"):
+            if utils_core.path_exists(".srcmode"):
                 sys.path.append("..")            
             bmain=False
             name=a1[4:]

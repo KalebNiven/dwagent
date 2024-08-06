@@ -12,9 +12,7 @@ import json
 import os
 import hashlib
 import base64
-import utils
-
-
+import utils_core
 ##############################
 ######### IPCSERVER ##########
 ##############################
@@ -71,7 +69,7 @@ class IPCStatus(threading.Thread):
     def run(self):
         logwait=60*10
         while not self._bclose:
-            if self._cnt==utils.sys_maxsize:
+            if self._cnt==utils_core.sys_maxsize:
                 self._cnt=0
             else:
                 self._cnt+=1
@@ -84,7 +82,7 @@ class IPCStatus(threading.Thread):
                 sapp = self._agent.get_name()
                 if sapp is None:
                     sapp=""
-                if utils.is_py2():
+                if utils_core.is_py2():
                     sapp=sapp.encode("unicode-escape");
                 self._prop.set_property("name", sapp)
                 
@@ -92,7 +90,7 @@ class IPCStatus(threading.Thread):
                 self._prop.set_property("connections", str(len(jo))) #TO REMOVE 2021-02-11                
                 self._prop.set_property("sessions_status", json.dumps(jo))
             except:
-                e=utils.get_exception()
+                e=utils_core.get_exception()
                 if logwait>=60*10:
                     logwait=0
                     self._agent.write_except(e)                    
@@ -138,7 +136,7 @@ class IPCConfig(threading.Thread):
                                 break
                             time.sleep(0.1)
                 except:
-                    e=utils.get_exception()
+                    e=utils_core.get_exception()
                     self._agent.write_except(e);
                 self._prop.set_property("response_data","")
                 self._prop.set_property("request_data","")
@@ -155,8 +153,8 @@ class IPCConfig(threading.Thread):
                 try:
                     return func(prms)
                 except:
-                    e=utils.get_exception()
-                    return "ERROR:" + utils.exception_to_string(e)
+                    e=utils_core.get_exception()
+                    return "ERROR:" + utils_core.exception_to_string(e)
             except:
                 return "ERROR:INVALID_REQUEST"
         else:
@@ -308,9 +306,9 @@ class IPCClient():
                     prms["_request"]=req
                     prms["_user"]=usr
                     #Hash password
-                    encpwd=hashlib.sha256(utils.str_to_bytes(pwd,"utf8")).digest()
+                    encpwd=hashlib.sha256(utils_core.str_to_bytes(pwd,"utf8")).digest()
                     encpwd=base64.b64encode(encpwd)
-                    prms["_password"]=utils.bytes_to_str(encpwd)
+                    prms["_password"]=utils_core.bytes_to_str(encpwd)
                     
                     self._prop.set_property("request_data",json.dumps(prms))
                     self._prop.set_property("response_data","")
@@ -407,24 +405,24 @@ class HttpServer(threading.Thread):
             self._close=True
             self._httpd.shutdown() 
 '''
-class HttpConfigServer(utils.HTTPServer):
+class HttpConfigServer(utils_core.HTTPServer):
     
     def __init__(self, port, agent):
         server_address = ('127.0.0.1', port)
-        utils.HTTPServer.__init__(self, server_address, HttpConfigHandler)
+        utils_core.HTTPServer.__init__(self, server_address, HttpConfigHandler)
         self._agent = agent
     
     def get_agent(self):
         return self._agent
 
 
-class HttpConfigHandler(utils.BaseHTTPRequestHandler):
+class HttpConfigHandler(utils_core.BaseHTTPRequestHandler):
 
     def do_GET(self):
         #Legge richiesta
-        o = utils.url_parse(self.path)
+        o = utils_core.url_parse(self.path)
         nm = o.path
-        qs = utils.url_parse_qs(o.query)
+        qs = utils_core.url_parse_qs(o.query)
         #Invia risposta
         resp={}
         resp['code']=404

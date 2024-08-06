@@ -8,7 +8,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import ctypes
 import threading
-import utils
+import utils_core
 import ipc
 import native
 import struct
@@ -153,7 +153,7 @@ class ProcessEncoder(ipc.ChildProcessThread):
         self._curx=-1
         self._cury=-1
         self._curvis=False
-        self._curcounter=utils.Counter()
+        self._curcounter=utils_core.Counter()
         self._sound_enable=True
         self._sound_cond=None
         self._sound_memmap=None
@@ -163,7 +163,7 @@ class ProcessEncoder(ipc.ChildProcessThread):
         self._sound_cid=0
         self._sound_thread=None
         self._write_lock = threading.RLock()
-        self._fps_cnt=utils.Counter()
+        self._fps_cnt=utils_core.Counter()
     
     def _init(self,joreq):
         self._skipevent=joreq["event"]
@@ -238,7 +238,7 @@ class ProcessEncoder(ipc.ChildProcessThread):
                                     data1 = self._sound_memmap.read(szrem)
                                     self._sound_memmap.seek(17)
                                     data2 = self._sound_memmap.read(plim)
-                                    data = utils.bytes_join([data1,data2])
+                                    data = utils_core.bytes_join([data1,data2])
                                 else:
                                     self._sound_memmap.seek(17)
                                     data = self._sound_memmap.read(plim)
@@ -252,8 +252,8 @@ class ProcessEncoder(ipc.ChildProcessThread):
                 if data is not None:
                     iret = self._sndmdl.DWASoundCaptureOPUSEncode(self._sound_encses, data, len(data), common.cb_sound_encode_result)
         except:
-            ex = utils.get_exception()
-            print("ProcessEncoderSound:" + utils.exception_to_string(ex))
+            ex = utils_core.get_exception()
+            print("ProcessEncoderSound:" + utils_core.exception_to_string(ex))
         finally:
             self._close_sound()
          
@@ -265,10 +265,10 @@ class ProcessEncoder(ipc.ChildProcessThread):
             with self._write_lock:
                 self._stream.write_bytes(pdata[0:sz])            
         except:
-            ex = utils.get_exception()
+            ex = utils_core.get_exception()
             if not self.is_destroy():
                 self.destroy()
-                print("_sound_encode_result: err" + utils.exception_to_string(ex))            
+                print("_sound_encode_result: err" + utils_core.exception_to_string(ex))            
     
     def _close_sound(self):        
         if self._sound_memmap is not None:
@@ -340,7 +340,7 @@ class ProcessEncoder(ipc.ChildProcessThread):
                                 mon["curcapid"]=capid
                                 rgbimage=common.RGB_IMAGE()
                                 btsi=self._memmap.read(ctypes.sizeof(rgbimage))
-                                utils.convert_bytes_to_structure(rgbimage,btsi)
+                                utils_core.convert_bytes_to_structure(rgbimage,btsi)
                                 btsd = self._memmap.read(rgbimage.sizedata)
                                 rgbimage.data=ctypes.cast(ctypes.c_char_p(btsd),ctypes.c_void_p)
                         elif capst==b"P":
@@ -400,7 +400,7 @@ class ProcessEncoder(ipc.ChildProcessThread):
                             mon["curcapid"]=capid
                             rgbimage=common.RGB_IMAGE()
                             btsi=self._memmap.read(ctypes.sizeof(rgbimage))
-                            utils.convert_bytes_to_structure(rgbimage,btsi)
+                            utils_core.convert_bytes_to_structure(rgbimage,btsi)
                             btsd = self._memmap.read(rgbimage.sizedata)
                             rgbimage.data=ctypes.cast(ctypes.c_char_p(btsd),ctypes.c_void_p)
                             self._cursor_encode()
@@ -428,7 +428,7 @@ class ProcessEncoder(ipc.ChildProcessThread):
             curimage=common.CURSOR_IMAGE()
             self._memmap.seek(self._curpos)
             btsi=self._memmap.read(ctypes.sizeof(curimage))
-            utils.convert_bytes_to_structure(curimage,btsi)            
+            utils_core.convert_bytes_to_structure(curimage,btsi)            
             if self._curx!=curimage.x or self._cury!=curimage.y or self._curvis!=curimage.visible:
                 self._curx=curimage.x
                 self._cury=curimage.y
@@ -438,7 +438,7 @@ class ProcessEncoder(ipc.ChildProcessThread):
             curid=self._struct_Q.unpack(self._memmap.read(8))[0]
             if self._curid!=curid:
                 self._curid=curid
-                btsd = utils.zlib_decompress(self._memmap.read(curimage.sizedata))                
+                btsd = utils_core.zlib_decompress(self._memmap.read(curimage.sizedata))                
                 curimage.data=ctypes.cast(ctypes.c_char_p(btsd),ctypes.c_void_p)
                 bencode=True
             else:
@@ -514,9 +514,9 @@ class ProcessEncoder(ipc.ChildProcessThread):
                         self._skipevent.clear()
                         self._stream.write_bytes(b"")                            
         except:
-            ex = utils.get_exception()
+            ex = utils_core.get_exception()
             if not self.is_destroy():
-                print("ProcessEncoder:" + utils.exception_to_string(ex))
+                print("ProcessEncoder:" + utils_core.exception_to_string(ex))
         finally:
             self._close_monitors()
             native.unload_libraries(self._listlibscr)            
@@ -566,9 +566,9 @@ class ProcessEncoder(ipc.ChildProcessThread):
                 with self._write_lock:
                     self._stream.write_bytes(pdata[0:sz])            
         except:
-            ex = utils.get_exception()
+            ex = utils_core.get_exception()
             if not self.is_destroy():
                 self.destroy()
-                print("_screen_encode_result: err" + utils.exception_to_string(ex))
+                print("_screen_encode_result: err" + utils_core.exception_to_string(ex))
                 
                 

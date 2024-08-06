@@ -7,16 +7,16 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 
 import json
-import utils
+import utils_core
 import agent
 import shutil
 import random
 
 ##### TO FIX 22/09/2021
 try:
-    TMP_bytes_to_str=utils.bytes_to_str
-    TMP_str_to_bytes=utils.str_to_bytes
-    TMP_nrange=utils.nrange
+    TMP_bytes_to_str=utils_core.bytes_to_str
+    TMP_str_to_bytes=utils_core.str_to_bytes
+    TMP_nrange=utils_core.nrange
 except:
     TMP_bytes_to_str=lambda b, enc="ascii": b.decode(enc, errors="replace")
     TMP_str_to_bytes=lambda s, enc="ascii": s.encode(enc, errors="replace")
@@ -25,8 +25,8 @@ try:
     import os
     import sys
     if sys.version_info[0]==2:        
-        if utils.path_exists(os.path.dirname(__file__) + os.sep + "__pycache__"):
-            utils.path_remove(os.path.dirname(__file__) + os.sep + "__pycache__")
+        if utils_core.path_exists(os.path.dirname(__file__) + os.sep + "__pycache__"):
+            utils_core.path_remove(os.path.dirname(__file__) + os.sep + "__pycache__")
 except: 
     None
 ##### TO FIX 22/09/2021
@@ -67,13 +67,13 @@ class TextEditor():
 
     def _read(self, path):
         
-        if utils.path_size(path)>2*1024*1024:
+        if utils_core.path_size(path)>2*1024*1024:
             raise Exception("File too large.")
         
         prop ={}
         enc=None
         bom=False
-        text_file = utils.file_open(path, 'rb')
+        text_file = utils_core.file_open(path, 'rb')
         try:
             bts = text_file.read()
             for bm in self._get_app_filesystem().TEXTFILE_BOM_TYPE:
@@ -87,7 +87,7 @@ class TextEditor():
             if not bom:
                 enc="utf8"                
             s=TMP_bytes_to_str(bts,enc)
-            endline=utils.line_sep
+            endline=utils_core.line_sep
             if s.find("\r\n")>0:
                 endline="\r\n"
             elif s.find("\n")>0:
@@ -118,24 +118,24 @@ class TextEditor():
         if "endline" in prop:
             endl = prop["endline"]
         else:
-            endl = utils.line_sep
+            endl = utils_core.line_sep
         bm=None
         
         #CREA FILE TEMPORANEO
         pathtmp = None
-        sprnpath=utils.path_dirname(path);    
+        sprnpath=utils_core.path_dirname(path);    
         while True:
             r="".join([random.choice("0123456789") for x in TMP_nrange(6)])            
-            pathtmp=sprnpath + utils.path_sep + "temporary" + r + ".dwstext";
-            if not utils.path_exists(pathtmp):
-                utils.file_open(pathtmp, 'wb').close() #Crea il file per imposta i permessi
+            pathtmp=sprnpath + utils_core.path_sep + "temporary" + r + ".dwstext";
+            if not utils_core.path_exists(pathtmp):
+                utils_core.file_open(pathtmp, 'wb').close() #Crea il file per imposta i permessi
                 self._agent_main.get_osmodule().fix_file_permissions("CREATE_FILE",pathtmp)
-                text_file = utils.file_open(pathtmp, 'wb')
+                text_file = utils_core.file_open(pathtmp, 'wb')
                 if "bom" in prop and prop["bom"]=='true':
                     bm = self._get_bom_byname(enc)
                     if bm is not None:
                         #Write BOM
-                        text_file = utils.file_open(pathtmp, 'wb')
+                        text_file = utils_core.file_open(pathtmp, 'wb')
                         text_file.write(bm["Data"])                        
                 break
         try:
@@ -144,13 +144,13 @@ class TextEditor():
             text_file.write(TMP_str_to_bytes(s,enc))
         finally:
             text_file.close()
-        if utils.path_exists(path):
-            if utils.path_isdir(path):
-                utils.path_remove(self._tmpname)
+        if utils_core.path_exists(path):
+            if utils_core.path_isdir(path):
+                utils_core.path_remove(self._tmpname)
                 raise Exception("PATH is directory.")
             else:
                 self._agent_main.get_osmodule().fix_file_permissions("COPY_FILE",pathtmp, path)
-                utils.path_remove(path)
+                utils_core.path_remove(path)
         shutil.move(pathtmp, path)
 
     

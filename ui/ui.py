@@ -18,7 +18,7 @@ import os
 import sys
 import threading
 import traceback
-import utils
+import utils_core
 
 _WIDTH=760
 _HEIGHT=500
@@ -337,17 +337,17 @@ class UI():
     def __init__(self, params, step_init):
         self._title = "DWAgent"
         if "title" in params:
-            self._title = utils.str_new(params["title"])
+            self._title = utils_core.str_new(params["title"])
         self._logo = None
         self._topimage = None
         self._topinfo = None
         self._leftcolor = None
         if "logo" in params:
-            self._logo = utils.str_new(params["logo"])
+            self._logo = utils_core.str_new(params["logo"])
         if "topimage" in params:
-            self._topimage = utils.str_new(params["topimage"])
+            self._topimage = utils_core.str_new(params["topimage"])
         if "topinfo" in params:
-            self._topinfo = utils.str_new(params["topinfo"])
+            self._topinfo = utils_core.str_new(params["topinfo"])
         if "leftcolor" in params:
             self._leftcolor = params["leftcolor"]
         self._step_init=step_init
@@ -426,7 +426,7 @@ class UI():
     
     def _printcl(self, msg):
         #print("ENC:" + sys.stdout.encoding)
-        if utils.is_py2():
+        if utils_core.is_py2():
             if sys.stdout.encoding is None:
                 print(msg)
             else:
@@ -437,19 +437,19 @@ class UI():
     def _raw_input(self,msg,bpasswd=False):
         try:
             appmsg=msg + u" "
-            if utils.is_py2():
+            if utils_core.is_py2():
                 if sys.stdout.encoding is not None:
                     appmsg=appmsg.encode(sys.stdout.encoding,'replace')            
             self._is_raw_input=True
             if not bpasswd:
-                if utils.is_py2():
+                if utils_core.is_py2():
                     sr = raw_input(appmsg)
                 else:
                     sr = input(appmsg)
             else:
                 import getpass
                 sr = getpass.getpass(appmsg)
-            if utils.is_py2():
+            if utils_core.is_py2():
                 sr=sr.decode('utf-8','replace')            
             if sr.lower()==u"#exit":
                 raise Exception("#EXIT")
@@ -459,7 +459,7 @@ class UI():
             return sr
         except Exception as e:
             self._is_raw_input=False
-            msg = utils.exception_to_string(e)
+            msg = utils_core.exception_to_string(e)
             if msg==u"#EXIT":
                 self.close()
             elif msg==u"#BACK":
@@ -470,7 +470,7 @@ class UI():
             else:
                 self._printcl(u"")
                 self._printcl(u"")
-                self._printcl(messages.get_message('unexpectedError').format(utils.str_new(traceback.format_exc())))
+                self._printcl(messages.get_message('unexpectedError').format(utils_core.str_new(traceback.format_exc())))
                 self.close()
             return None
         
@@ -488,7 +488,7 @@ class UI():
             self.wait_message(messages.get_message("waiting"))
             ret=self._cur_step_ui.fire_next_step()
         except Exception:
-            ret=ErrorDialog(messages.get_message('unexpectedError').format(utils.str_new(traceback.format_exc())))
+            ret=ErrorDialog(messages.get_message('unexpectedError').format(utils_core.str_new(traceback.format_exc())))
         self._op_complete(ret)
     
     def _clmode_back(self):
@@ -496,7 +496,7 @@ class UI():
             self.wait_message(messages.get_message("waiting"))
             ret=self._cur_step_ui.fire_prev_step()
         except Exception:
-            ret=ErrorDialog(messages.get_message('unexpectedError').format(utils.str_new(traceback.format_exc())))            
+            ret=ErrorDialog(messages.get_message('unexpectedError').format(utils_core.str_new(traceback.format_exc())))            
         self._op_complete(ret)
      
     def _clmode_start(self):
@@ -519,7 +519,7 @@ class UI():
             if isinstance(self._cur_step_ui,ErrorDialog):
                 self._cur_step_ui=Message(self._cur_step_ui.get_message())
         except Exception as e:            
-            self._cur_step_ui=Message("Error: " + utils.exception_to_string(e))        
+            self._cur_step_ui=Message("Error: " + utils_core.exception_to_string(e))        
         self._prepare_step(self._cur_step_ui)
         self._printcl(u"")
     
@@ -562,7 +562,7 @@ class UI():
             if isinstance(ui,ErrorDialog):
                 ui=Message(ui.get_message())
         except Exception as e:            
-            ui=Message("Error: " + utils.exception_to_string(e))
+            ui=Message("Error: " + utils_core.exception_to_string(e))
         return ui
     
     def _guimode_step_init_callback(self,curui):

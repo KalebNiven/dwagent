@@ -8,14 +8,14 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import locale
 import subprocess
-import utils
+import utils_core
 import threading
 import importlib
 
 class ResText:
     
     def __init__(self, pkgnm):
-        if utils.path_exists(".srcmode"):
+        if utils_core.path_exists(".srcmode"):
             self._pkgnm = pkgnm.split(".")[1]
         else:
             self._pkgnm=pkgnm
@@ -76,13 +76,13 @@ class ResText:
                 if self._lang_current is None:
                     applng=None
                     try:
-                        if utils.is_windows():
+                        if utils_core.is_windows():
                             import ctypes
                             windll = ctypes.windll.kernel32
                             windll.GetUserDefaultUILanguage()
                             wl = locale.windows_locale[windll.GetUserDefaultUILanguage()]
                             applng=wl.split("_")[0]
-                        elif utils.is_mac():
+                        elif utils_core.is_mac():
                             p = subprocess.Popen(['defaults', 'read', '-g', 'AppleLocale'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                             sout, serr = p.communicate()
                             if sout is not None:
@@ -114,13 +114,13 @@ class ResText:
 class ResImage:
     
     def __init__(self, pkgnm):
-        if utils.path_exists(".srcmode"):
+        if utils_core.path_exists(".srcmode"):
             self._pkgnm=pkgnm.split(".")[1]
         else:
             self._pkgnm=pkgnm        
-        self._basepth=utils.str_new(self._pkgnm.replace(".",utils.path_sep))
+        self._basepth=utils_core.str_new(self._pkgnm.replace(".",utils_core.path_sep))
         
     def get(self, nm):        
-        return self._basepth + utils.path_sep + utils.str_new(nm)
+        return self._basepth + utils_core.path_sep + utils_core.str_new(nm)
         
         

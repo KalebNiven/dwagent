@@ -6,7 +6,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 '''
 import common
 import struct
-import utils
+import utils_core
 import agent
 import native
 import ctypes
@@ -102,7 +102,7 @@ if __name__ == "__main__":
         mmap.seek(0)
         mmap.read(1)
         bts = mmap.read(ctypes.sizeof(rgbimage))
-        utils.convert_bytes_to_structure(rgbimageother,bts)
+        utils_core.convert_bytes_to_structure(rgbimageother,bts)
         bts = mmap.read(rgbimage.width*rgbimage.height*3)
         print("readmmap tm :" + str(time.time()-tm) + "  POS:" + str(mmap.tell()))
         

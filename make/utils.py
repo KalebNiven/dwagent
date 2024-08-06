@@ -30,7 +30,6 @@ _biswindows=(platform.system().lower().find("window") > -1)
 _bislinux=(platform.system().lower().find("linux") > -1)
 _bismac=(platform.system().lower().find("darwin") > -1)
 
-
 def is_windows():
     return _biswindows
 

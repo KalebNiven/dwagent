@@ -24,7 +24,7 @@ except: #FIX INSTALLER
     import ui
 import sys
 import listener
-import utils
+import utils_core
 import json
 
 class Configure:
@@ -135,20 +135,20 @@ class Configure:
     def start(self, bgui=True):        
         confjson={}
         try:
-            f = utils.file_open('config.json')
+            f = utils_core.file_open('config.json')
             confjson = json.loads(f.read())
             f.close()
         except Exception:
             None
         prmsui={}
         if "name" in confjson:
-            self._name=utils.str_new(confjson["name"])            
+            self._name=utils_core.str_new(confjson["name"])            
         prmsui["title"]=self._get_message('configureTitle')
         if "topinfo" in confjson:
             prmsui["topinfo"]=confjson["topinfo"]
         if "topimage" in confjson:
-            prmsui["topimage"]=u"ui" + utils.path_sep + u"images" + utils.path_sep + u"custom" + utils.path_sep + confjson["topimage"]
-        applg = gdi._get_logo_from_conf(confjson, u"ui" + utils.path_sep + u"images" + utils.path_sep + u"custom" + utils.path_sep)
+            prmsui["topimage"]=u"ui" + utils_core.path_sep + u"images" + utils_core.path_sep + u"custom" + utils_core.path_sep + confjson["topimage"]
+        applg = gdi._get_logo_from_conf(confjson, u"ui" + utils_core.path_sep + u"images" + utils_core.path_sep + u"custom" + utils_core.path_sep)
         if applg != "":
             prmsui["logo"]=applg
         if "leftcolor" in confjson:
@@ -164,7 +164,7 @@ class Configure:
             msg = ui.Message(self._get_message('configureWelcome'))
             msg.next_step(self.step_check_password)
         except Exception as e:
-            msg = ui.Message(utils.exception_to_string(e))
+            msg = ui.Message(utils_core.exception_to_string(e))
         return msg
         '''
         return self.step_check_password(curui);
@@ -357,7 +357,7 @@ class Configure:
             msg.next_step(self.step_menu_main)
             return msg
         except Exception as e:
-            s = utils.exception_to_string(e)
+            s = utils_core.exception_to_string(e)
             if s=="INVALID_CODE":
                 chs = ui.Chooser()
                 chs.set_key("tryAgain")

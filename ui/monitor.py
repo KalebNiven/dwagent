@@ -17,7 +17,7 @@ try:
     from . import gdi
 except: #FIX INSTALLER
     import gdi 
-import utils
+import utils_core
 import json
 import sys
 import subprocess
@@ -50,13 +50,13 @@ COLOR_DISABLE="c21b1a"
 TIMEOUT_REQ=5
 
 def is_windows():
-    return utils.is_windows()
+    return utils_core.is_windows()
 
 def is_linux():
-    return utils.is_linux()
+    return utils_core.is_linux()
 
 def is_mac():
-    return utils.is_mac()
+    return utils_core.is_mac()
 
 def get_user_dir():
     try:
@@ -65,7 +65,7 @@ def get_user_dir():
         ctypes.windll.shell32.SHGetFolderPathW(None, 40, None, 0, buf) #40 = CSIDL_PROFILE
         return buf.value
     except:
-        return utils.path_expanduser("~")
+        return utils_core.path_expanduser("~")
 
 
 class NotifyActivitiesHideEffect():
@@ -344,22 +344,22 @@ class Main():
         self._notifyActivities=None
         self._notifyAcceptSession=None
         try:
-            f = utils.file_open('config.json', "rb")
+            f = utils_core.file_open('config.json', "rb")
             s=f.read()
-            self._properties = json.loads(utils.bytes_to_str(s,"utf8"))
+            self._properties = json.loads(utils_core.bytes_to_str(s,"utf8"))
             f.close()
         except Exception:
             None
         if 'name' in self._properties:
-            self._name=utils.str_new(self._properties["name"])
-        applg = gdi._get_logo_from_conf(self._properties, u"ui" + utils.path_sep + u"images" + utils.path_sep + u"custom" + utils.path_sep)
+            self._name=utils_core.str_new(self._properties["name"])
+        applg = gdi._get_logo_from_conf(self._properties, u"ui" + utils_core.path_sep + u"images" + utils_core.path_sep + u"custom" + utils_core.path_sep)
         if applg != "":
             self._logo=applg        
     
     def _get_image(self, name):
         apps = images.get_image(name)
         if self._mode=="runonfly":            
-            apps=self._runonfly_base_path + utils.path_sep + apps
+            apps=self._runonfly_base_path + utils_core.path_sep + apps
         return apps
     
     def _get_message(self, key):
@@ -379,25 +379,25 @@ class Main():
     
     def _set_config_base_path(self, pth):
         self._config_base_path=pth
-        f = utils.file_open(self._config_base_path + os.sep + 'config.json', "rb")
+        f = utils_core.file_open(self._config_base_path + os.sep + 'config.json', "rb")
         s=f.read()
-        self._properties = json.loads(utils.bytes_to_str(s,"utf8"))
+        self._properties = json.loads(utils_core.bytes_to_str(s,"utf8"))
         f.close()
     
     def lock(self):
-        self._homedir = get_user_dir() + utils.path_sep + u"." + self._name.lower()
-        if not utils.path_exists(self._homedir):
-            utils.path_makedirs(self._homedir)
-        self._lockfilename = self._homedir + utils.path_sep + "monitor.lock"
+        self._homedir = get_user_dir() + utils_core.path_sep + u"." + self._name.lower()
+        if not utils_core.path_exists(self._homedir):
+            utils_core.path_makedirs(self._homedir)
+        self._lockfilename = self._homedir + utils_core.path_sep + "monitor.lock"
         try:
             if is_linux() or is_mac():
                 import fcntl
-                self._lockfile = utils.file_open(self._lockfilename , "w")
+                self._lockfile = utils_core.file_open(self._lockfilename , "w")
                 fcntl.lockf(self._lockfile, fcntl.LOCK_EX | fcntl.LOCK_NB)
             else:
-                if utils.path_exists(self._lockfilename ):
-                    utils.path_remove(self._lockfilename ) 
-                self._lockfile = utils.file_open(self._lockfilename , "w")
+                if utils_core.path_exists(self._lockfilename ):
+                    utils_core.path_remove(self._lockfilename ) 
+                self._lockfile = utils_core.file_open(self._lockfilename , "w")
                 self._lockfile.write("\x00")
         except:
             try:
@@ -416,36 +416,36 @@ class Main():
     def unlock(self):
         self._lockfile.close()  
         try:
-            utils.path_remove(self._lockfilename ) 
+            utils_core.path_remove(self._lockfilename ) 
         except:
             None
         #self.remove_show_file()
         
     def check_stop(self):
         stopfilename = "monitor.stop"
-        return utils.path_exists(stopfilename)
+        return utils_core.path_exists(stopfilename)
     
     def check_update(self):
         stopfilename = "monitor.update"
-        return utils.path_exists(stopfilename)
+        return utils_core.path_exists(stopfilename)
     
     def add_show_file(self):
-        showfilename  = self._homedir + utils.path_sep + "monitor.show"
-        if not utils.path_exists(showfilename):
-            f = utils.file_open(showfilename, "w")
+        showfilename  = self._homedir + utils_core.path_sep + "monitor.show"
+        if not utils_core.path_exists(showfilename):
+            f = utils_core.file_open(showfilename, "w")
             f.write("\x00")
             f.close()
         
     def remove_show_file(self):
-        showfilename  = self._homedir + utils.path_sep + "monitor.show"        
+        showfilename  = self._homedir + utils_core.path_sep + "monitor.show"        
         try:
-            utils.path_remove(showfilename)
+            utils_core.path_remove(showfilename)
         except:
             None
     
     def check_show(self):
-        showfilename = self._homedir + utils.path_sep + "monitor.show"
-        return utils.path_exists(showfilename)
+        showfilename = self._homedir + utils_core.path_sep + "monitor.show"
+        return utils_core.path_exists(showfilename)
     
     def get_ico_file(self, name):
         return self._get_image(name + ".bmp")
@@ -498,7 +498,7 @@ class Main():
                     ret["state"] = self._ipc_client.get_property("state")
                     try:
                         ret["name"] = self._ipc_client.get_property("name")
-                        if utils.is_py2():
+                        if utils_core.is_py2():
                             ret["name"]=ret["name"].decode("unicode-escape")
                     except:
                         None
@@ -525,7 +525,7 @@ class Main():
                             self._notifyAcceptSession.update(appar)
                         
                     except Exception as ex:
-                        print(utils.get_exception_string(ex))
+                        print(utils_core.get_exception_string(ex))
                     return ret;
             else:
                 if self._monitor_desktop_notification!="none":
@@ -536,7 +536,7 @@ class Main():
                         
                 return ret
         except Exception as e:            
-            print(utils.get_exception_string(e))
+            print(utils_core.get_exception_string(e))
             return ret
         finally:
             self._semaphore.release()
@@ -751,7 +751,7 @@ class Main():
         except Exception as e:
             dlg = gdi.DialogMessage(gdi.DIALOGMESSAGE_ACTIONS_OK,gdi.DIALOGMESSAGE_LEVEL_ERROR,self._app)
             dlg.set_title(self._get_message('monitorTitle'))
-            dlg.set_message(utils.exception_to_string(e))
+            dlg.set_message(utils_core.exception_to_string(e))
             dlg.show();
     
     def reject_session(self, sid):
@@ -762,7 +762,7 @@ class Main():
         except Exception as e:
             dlg = gdi.DialogMessage(gdi.DIALOGMESSAGE_ACTIONS_OK,gdi.DIALOGMESSAGE_LEVEL_ERROR,self._app)
             dlg.set_title(self._get_message('monitorTitle'))
-            dlg.set_message(utils.exception_to_string(e))
+            dlg.set_message(utils_core.exception_to_string(e))
             dlg.show();
             
     def _enable_disable_action_pwd(self,e):
@@ -809,7 +809,7 @@ class Main():
             except Exception as e:
                 dlg = gdi.DialogMessage(gdi.DIALOGMESSAGE_ACTIONS_OK,gdi.DIALOGMESSAGE_LEVEL_ERROR,self._app)
                 dlg.set_title(self._get_message('monitorTitle'))
-                dlg.set_message(utils.exception_to_string(e))
+                dlg.set_message(utils_core.exception_to_string(e))
                 dlg.show();
     
     def ask_password(self, faction):
@@ -885,12 +885,12 @@ class Main():
     def configure(self, e):
         if e["action"]=="PERFORMED":
             if is_windows():
-                subprocess.call(["native" + utils.path_sep + "dwaglnc.exe" , "configure"]) 
+                subprocess.call(["native" + utils_core.path_sep + "dwaglnc.exe" , "configure"]) 
             elif is_linux():
-                self._runproc(["native" + utils.path_sep + "configure"])
+                self._runproc(["native" + utils_core.path_sep + "configure"])
             elif is_mac():
                 #KEEP FOR COMPATIBILITY
-                if utils.path_exists("native/Configure.app/Contents/MacOS/Configure"):
+                if utils_core.path_exists("native/Configure.app/Contents/MacOS/Configure"):
                     self._runproc(["native/Configure.app/Contents/MacOS/Configure"])
                 else:
                     self._runproc(["native/Configure.app/Contents/MacOS/Run"])            
@@ -898,16 +898,16 @@ class Main():
     def run_update(self):
         #Lancia se stesso perche con il file monitor.update attende che le librerie si aggiornano
         if is_windows():
-            subprocess.call(["native" + utils.path_sep + "dwaglnc.exe" , "systray"]) 
+            subprocess.call(["native" + utils_core.path_sep + "dwaglnc.exe" , "systray"]) 
         elif is_linux():
-            self._runproc(["native" + utils.path_sep + self._name.lower(),"systray","&"])
+            self._runproc(["native" + utils_core.path_sep + self._name.lower(),"systray","&"])
         elif is_mac():
             None            
     
     def unistall(self, e):
         if e["action"]=="PERFORMED":
             if is_windows():
-                subprocess.call(["native" + utils.path_sep + "dwaglnc.exe" , "uninstall"]) 
+                subprocess.call(["native" + utils_core.path_sep + "dwaglnc.exe" , "uninstall"]) 
             elif is_linux():
                 sucmd=None
                 if self._which("gksu"):
@@ -920,7 +920,7 @@ class Main():
                     for k in osenv:
                         if k!="LD_LIBRARY_PATH":
                             libenv[k]=osenv[k]
-                    subprocess.Popen([sucmd , utils.path_absname("native" + utils.path_sep + "uninstall")],env=libenv)
+                    subprocess.Popen([sucmd , utils_core.path_absname("native" + utils_core.path_sep + "uninstall")],env=libenv)
                 else:
                     dlg = gdi.DialogMessage(gdi.DIALOGMESSAGE_ACTIONS_OK,gdi.DIALOGMESSAGE_LEVEL_ERROR,self._app)
                     dlg.set_title(self._get_message('monitorTitle'))
@@ -1307,7 +1307,7 @@ class Main():
             if mode=="systray":
                 self.prepare_systray()
                 try:
-                    if utils.is_mac():
+                    if uutils_coreis_mac():
                         gdi.mac_nsapp_set_activation_policy(1)
                 except:
                     None
@@ -1354,7 +1354,7 @@ def fmain(args): #SERVE PER MACOS APP
                 main.start("info")
         sys.exit(0)
     except Exception as e:
-        print(utils.get_exception_string(e))
+        print(uutils_coreget_exception_string(e))
         sys.exit(1)
 
 def ctrlHandler(ctrlType):    
